@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>개인연금 계산기 - 연금 포털</title>
+  <link rel="stylesheet" href="../css/common.css">
+  <link rel="stylesheet" href="../css/calculator.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <nav id="main-nav"></nav>
+
+  <div class="container">
+    <div class="page-header fade-in">
+      <h1 class="page-title">개인연금 계산기</h1>
+      <p class="page-subtitle">연금저축 적립 시뮬레이션, 세액공제 효과, ISA 전환 비교를 분석합니다</p>
+    </div>
+
+    <div class="info-box info fade-in">
+      <span class="icon">💡</span>
+      <div>
+        <strong>연금저축</strong>: 연 1,800만원 납입한도, 세액공제 600만원 한도 (IRP 합산 900만원)<br>
+        <strong>수령 시</strong>: 연금소득세 3.3~5.5% (나이별), 1,500만원 초과 시 종합과세 or 15% 분리과세 선택<br>
+        <strong>ISA 전환</strong>: ISA 만기 후 연금전환 시 전환금액 10%(최대 300만원) 추가 세액공제
+      </div>
+    </div>
+
+    <!-- 탭 -->
+    <div class="tabs fade-in">
+      <button class="tab-btn active" onclick="PersonalPension.switchTab('sim', this)">적립 시뮬레이션</button>
+      <button class="tab-btn" onclick="PersonalPension.switchTab('isa', this)">ISA 전환 비교</button>
+      <button class="tab-btn" onclick="PersonalPension.switchTab('withdraw', this)">연금 수령 분석</button>
+    </div>
+
+    <!-- 탭1: 적립 시뮬레이션 -->
+    <div class="tab-content active" id="tab-sim">
+      <div class="calc-layout">
+        <div class="calc-input-panel">
+          <div class="card">
+            <h2 class="card-title"><span class="card-icon">📝</span>적립 조건 입력</h2>
+            <form id="ppSimForm">
+              <div class="input-section">
+                <div class="form-group">
+                  <label class="form-label">현재 나이</label>
+                  <div class="input-group">
+                    <input type="number" class="form-input" name="currentAge" value="40" min="20" max="65">
+                    <span class="input-suffix">세</span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">연금 수령 시작 나이</label>
+                  <div class="input-group">
+                    <input type="number" class="form-input" name="startAge" value="55" min="55" max="80">
+                    <span class="input-suffix">세</span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">월 납입액 <span class="unit">(만원)</span></label>
+                  <div class="input-group">
+                    <input type="text" class="form-input" name="monthlyContrib" data-type="money" value="50">
+                    <span class="input-suffix">만원</span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">현재 적립금 <span class="unit">(만원)</span></label>
+                  <div class="input-group">
+                    <input type="text" class="form-input" name="currentBalance" data-type="money" value="0">
+                    <span class="input-suffix">만원</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="input-section">
+                <div class="input-section-title">수익률 설정</div>
+                <div class="form-group">
+                  <label class="form-label">연간 예상 수익률 <span class="unit">(%)</span></label>
+                  <div class="form-range-container">
+                    <input type="range" class="form-range" name="returnRate" min="1" max="10" step="0.5" value="4" oninput="document.getElementById('retVal').textContent=this.value+'%'">
+                    <span class="range-value" id="retVal">4%</span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">총급여 (연봉) <span class="unit">(만원)</span>
+                    <span class="tooltip-trigger" data-tooltip="세액공제율 결정용: 5,500만원 이하 16.5%, 초과 13.2%">?</span>
+                  </label>
+                  <div class="input-group">
+                    <input type="text" class="form-input" name="annualSalary" data-type="money" value="5,000">
+                    <span class="input-suffix">만원</span>
+                  </div>
+                </div>
+              </div>
+
+              <button type="button" class="btn btn-primary btn-block btn-lg" onclick="PersonalPension.calcSim()">시뮬레이션</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="calc-result-panel">
+          <div id="sim-empty" class="card">
+            <div class="empty-result">
+              <div class="icon">💰</div>
+              <div class="text">조건을 입력하고 시뮬레이션을 눌러주세요</div>
+              <div class="sub-text">연금저축 적립금 성장과 세액공제 효과를 분석합니다</div>
+            </div>
+          </div>
+
+          <div id="sim-result" style="display:none;">
+            <div class="result-banner fade-in">
+              <div class="label">예상 적립금 (수령 시점)</div>
+              <div class="amount" id="sim-total">-</div>
+              <div class="sub" id="sim-info">-</div>
+            </div>
+
+            <div class="result-mini-grid fade-in">
+              <div class="result-mini">
+                <div class="label">총 납입액</div>
+                <div class="value" id="sim-contrib">-</div>
+              </div>
+              <div class="result-mini">
+                <div class="label">운용수익</div>
+                <div class="value green" id="sim-earnings">-</div>
+              </div>
+              <div class="result-mini">
+                <div class="label">누적 세액공제</div>
+                <div class="value green" id="sim-tax-credit">-</div>
+              </div>
+              <div class="result-mini">
+                <div class="label">실질 수익률</div>
+                <div class="value" id="sim-real-return">-</div>
+              </div>
+            </div>
+
+            <div class="card fade-in">
+              <h2 class="card-title"><span class="card-icon">📊</span>적립금 성장 추이</h2>
+              <div class="chart-container tall">
+                <canvas id="simChart"></canvas>
+              </div>
+            </div>
+
+            <div class="card fade-in">
+              <h2 class="card-title"><span class="card-icon">📋</span>연도별 상세</h2>
+              <div class="table-responsive">
+                <table class="data-table" id="sim-table">
+                  <thead>
+                    <tr>
+                      <th>나이</th>
+                      <th>연 납입</th>
+                      <th>운용수익</th>
+                      <th>적립금</th>
+                      <th>세액공제</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 탭2: ISA 전환 비교 -->
+    <div class="tab-content" id="tab-isa">
+      <div class="calc-layout">
+        <div class="calc-input-panel">
+          <div class="card">
+            <h2 class="card-title"><span class="card-icon">📝</span>ISA 전환 비교</h2>
+            <form id="isaForm">
+              <div class="form-group">
+                <label class="form-label">ISA 만기 자금 <span class="unit">(만원)</span></label>
+                <div class="input-group">
+                  <input type="text" class="form-input" name="isaAmount" data-type="money" value="3,000">
+                  <span class="input-suffix">만원</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">ISA 비과세 수익 <span class="unit">(만원)</span>
+                  <span class="tooltip-trigger" data-tooltip="일반형 200만원, 서민형 400만원까지 비과세">?</span>
+                </label>
+                <div class="input-group">
+                  <input type="text" class="form-input" name="isaProfit" data-type="money" value="200">
+                  <span class="input-suffix">만원</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">총급여 <span class="unit">(만원)</span></label>
+                <div class="input-group">
+                  <input type="text" class="form-input" name="isaSalary" data-type="money" value="5,000">
+                  <span class="input-suffix">만원</span>
+                </div>
+              </div>
+              <button type="button" class="btn btn-primary btn-block btn-lg" onclick="PersonalPension.calcISA()">비교하기</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="calc-result-panel">
+          <div id="isa-empty" class="card">
+            <div class="empty-result">
+              <div class="icon">🔄</div>
+              <div class="text">ISA 정보를 입력하고 비교하기를 눌러주세요</div>
+            </div>
+          </div>
+
+          <div id="isa-result" style="display:none;">
+            <div class="compare-grid fade-in">
+              <div class="compare-card">
+                <span class="badge blue">ISA 그대로 유지</span>
+                <div class="result-row">
+                  <span class="label">만기 수령액</span>
+                  <span class="value highlight" id="isa-keep-amount">-</span>
+                </div>
+                <div class="result-row">
+                  <span class="label">비과세 혜택</span>
+                  <span class="value positive" id="isa-keep-benefit">-</span>
+                </div>
+                <div class="result-row">
+                  <span class="label">추가 세액공제</span>
+                  <span class="value">없음</span>
+                </div>
+              </div>
+
+              <div class="compare-vs">VS</div>
+
+              <div class="compare-card recommended">
+                <span class="badge green">연금전환</span>
+                <div class="result-row">
+                  <span class="label">전환금액</span>
+                  <span class="value highlight" id="isa-conv-amount">-</span>
+                </div>
+                <div class="result-row">
+                  <span class="label">추가 세액공제 (10%, 최대 300만원)</span>
+                  <span class="value positive" id="isa-conv-extra-base">-</span>
+                </div>
+                <div class="result-row">
+                  <span class="label">세액공제 환급</span>
+                  <span class="value positive" id="isa-conv-credit">-</span>
+                </div>
+                <div class="result-row">
+                  <span class="label">총 혜택</span>
+                  <span class="value highlight" id="isa-conv-total">-</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="info-box success fade-in">
+              <span class="icon">✅</span>
+              <div id="isa-summary"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 탭3: 연금 수령 분석 -->
+    <div class="tab-content" id="tab-withdraw">
+      <div class="calc-layout">
+        <div class="calc-input-panel">
+          <div class="card">
+            <h2 class="card-title"><span class="card-icon">📝</span>연금 수령 분석</h2>
+            <form id="ppWithdrawForm">
+              <div class="form-group">
+                <label class="form-label">적립금 총액 <span class="unit">(만원)</span></label>
+                <div class="input-group">
+                  <input type="text" class="form-input" name="totalBalance" data-type="money" value="10,000">
+                  <span class="input-suffix">만원</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">수령 시작 나이</label>
+                <div class="input-group">
+                  <input type="number" class="form-input" name="withdrawAge" value="55" min="55" max="80">
+                  <span class="input-suffix">세</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">연간 수령 희망액 <span class="unit">(만원)</span>
+                  <span class="tooltip-trigger" data-tooltip="1,500만원 이하: 저율 분리과세 (3.3~5.5%), 초과: 종합과세 or 15% 분리과세 선택">?</span>
+                </label>
+                <div class="input-group">
+                  <input type="text" class="form-input" name="annualWithdraw" data-type="money" value="1,200">
+                  <span class="input-suffix">만원</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">기타 종합소득 <span class="unit">(만원/년)</span></label>
+                <div class="input-group">
+                  <input type="text" class="form-input" name="otherIncome" data-type="money" value="0">
+                  <span class="input-suffix">만원</span>
+                </div>
+              </div>
+              <button type="button" class="btn btn-primary btn-block btn-lg" onclick="PersonalPension.calcWithdraw()">분석하기</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="calc-result-panel">
+          <div id="wd-empty" class="card">
+            <div class="empty-result">
+              <div class="icon">📋</div>
+              <div class="text">수령 정보를 입력하고 분석하기를 눌러주세요</div>
+            </div>
+          </div>
+
+          <div id="wd-result" style="display:none;">
+            <div class="result-mini-grid fade-in">
+              <div class="result-mini">
+                <div class="label">연간 수령액</div>
+                <div class="value" id="wd-annual">-</div>
+              </div>
+              <div class="result-mini">
+                <div class="label">수령 가능 기간</div>
+                <div class="value" id="wd-years">-</div>
+              </div>
+              <div class="result-mini">
+                <div class="label">분리과세 여부</div>
+                <div class="value" id="wd-separate">-</div>
+              </div>
+              <div class="result-mini">
+                <div class="label">연간 세금</div>
+                <div class="value red" id="wd-tax">-</div>
+              </div>
+            </div>
+
+            <!-- 분리과세 vs 종합과세 비교 -->
+            <div class="card fade-in" id="wd-compare-card">
+              <h2 class="card-title"><span class="card-icon">⚖️</span>분리과세 vs 종합과세</h2>
+              <div class="compare-grid">
+                <div class="compare-card" id="wd-sep-card">
+                  <span class="badge blue">분리과세</span>
+                  <div class="result-row">
+                    <span class="label">세율</span>
+                    <span class="value" id="wd-sep-rate">-</span>
+                  </div>
+                  <div class="result-row">
+                    <span class="label">세금</span>
+                    <span class="value negative" id="wd-sep-tax">-</span>
+                  </div>
+                </div>
+                <div class="compare-vs">VS</div>
+                <div class="compare-card" id="wd-comp-card">
+                  <span class="badge orange">종합과세</span>
+                  <div class="result-row">
+                    <span class="label">합산소득</span>
+                    <span class="value" id="wd-comp-income">-</span>
+                  </div>
+                  <div class="result-row">
+                    <span class="label">추가 세금</span>
+                    <span class="value negative" id="wd-comp-tax">-</span>
+                  </div>
+                </div>
+              </div>
+              <div class="info-box success" style="margin-top:16px;">
+                <span class="icon">✅</span>
+                <div id="wd-recommend-text"></div>
+              </div>
+            </div>
+
+            <!-- 연금수령 한도 -->
+            <div class="card fade-in">
+              <h2 class="card-title"><span class="card-icon">📋</span>연금수령 연차별 한도</h2>
+              <div class="info-box warning">
+                <span class="icon">⚠️</span>
+                <div>연금수령한도를 초과하여 인출하면 <strong>기타소득세(16.5%)</strong>가 부과됩니다. 한도 내에서 수령하세요.</div>
+              </div>
+              <div class="table-responsive">
+                <table class="data-table">
+                  <thead>
+                    <tr><th>연차</th><th>분모</th><th>연간 한도</th><th>월 한도</th></tr>
+                  </thead>
+                  <tbody id="wd-limit-table"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer id="footer"></footer>
+
+  <script src="../js/constants.js"></script>
+  <script src="../js/calculator-engine.js"></script>
+  <script src="../js/common.js"></script>
+  <script>
+    const PersonalPension = {
+      switchTab(tabId, btn) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('tab-' + tabId).classList.add('active');
+        btn.classList.add('active');
+        APP.input.initMoneyFields();
+      },
+
+      calcSim() {
+        const form = document.getElementById('ppSimForm');
+        const currentAge = Number(form.currentAge.value) || 40;
+        const startAge = Number(form.startAge.value) || 55;
+        const monthlyContrib = Number(form.monthlyContrib.value.replace(/[^0-9]/g, '')) * 10000;
+        const currentBalance = Number(form.currentBalance.value.replace(/[^0-9]/g, '')) * 10000;
+        const returnRate = Number(form.returnRate.value) / 100;
+        const annualSalary = Number(form.annualSalary.value.replace(/[^0-9]/g, '')) * 10000;
+
+        const years = startAge - currentAge;
+        if (years <= 0) {
+          alert('수령 시작 나이가 현재 나이보다 커야 합니다.');
+          return;
+        }
+
+        const annualContrib = monthlyContrib * 12;
+        // 세액공제 한도 적용
+        const taxCreditBase = Math.min(annualContrib, 6000000); // 연금저축 한도 600만원
+        const creditRate = annualSalary <= 55000000 ? 0.165 : 0.132;
+        const annualTaxCredit = Math.round(taxCreditBase * creditRate);
+
+        // 시뮬레이션
+        let balance = currentBalance;
+        let totalContrib = currentBalance;
+        let totalTaxCredit = 0;
+        const chartLabels = [];
+        const chartContrib = [];
+        const chartBalance = [];
+        const tableRows = [];
+
+        for (let y = 0; y < years; y++) {
+          const age = currentAge + y;
+          const yearlyReturn = Math.round(balance * returnRate);
+          balance += annualContrib + yearlyReturn;
+          totalContrib += annualContrib;
+          totalTaxCredit += annualTaxCredit;
+
+          chartLabels.push(age + '세');
+          chartContrib.push(Math.round(totalContrib / 10000));
+          chartBalance.push(Math.round(balance / 10000));
+
+          tableRows.push(`
+            <tr>
+              <td>${age}세</td>
+              <td>${APP.format.manwon(annualContrib)}</td>
+              <td>${APP.format.manwon(yearlyReturn)}</td>
+              <td>${APP.format.manwon(balance)}</td>
+              <td>${APP.format.manwon(annualTaxCredit)}</td>
+            </tr>
+          `);
+        }
+
+        const totalEarnings = balance - totalContrib;
+        const realReturn = totalContrib > 0 ? (balance + totalTaxCredit - totalContrib) / totalContrib : 0;
+
+        document.getElementById('sim-empty').style.display = 'none';
+        document.getElementById('sim-result').style.display = '';
+
+        document.getElementById('sim-total').textContent = APP.format.manwon(balance);
+        document.getElementById('sim-info').textContent = `${currentAge}세 → ${startAge}세, ${years}년 적립, 수익률 ${(returnRate*100).toFixed(1)}%`;
+        document.getElementById('sim-contrib').textContent = APP.format.manwon(totalContrib);
+        document.getElementById('sim-earnings').textContent = '+' + APP.format.manwon(totalEarnings);
+        document.getElementById('sim-tax-credit').textContent = APP.format.manwon(totalTaxCredit);
+        document.getElementById('sim-real-return').textContent = APP.format.percent(realReturn);
+
+        // 차트
+        APP.chart.create('simChart', {
+          type: 'line',
+          data: {
+            labels: chartLabels,
+            datasets: [
+              {
+                label: '적립금 (원금+수익)',
+                data: chartBalance,
+                borderColor: APP.chart.colors.primary,
+                backgroundColor: APP.chart.colors.primaryAlpha,
+                fill: true, tension: 0.3,
+              },
+              {
+                label: '누적 납입액',
+                data: chartContrib,
+                borderColor: APP.chart.colors.accent,
+                backgroundColor: APP.chart.colors.accentAlpha,
+                fill: true, tension: 0.3,
+                borderDash: [5, 5],
+              }
+            ]
+          },
+          options: {
+            plugins: {
+              title: { display: true, text: '연금저축 적립금 성장 추이 (만원)', font: { size: 16 } }
+            },
+            scales: { y: { title: { display: true, text: '만원' } } }
+          }
+        });
+
+        // 테이블
+        document.querySelector('#sim-table tbody').innerHTML = tableRows.join('');
+
+        APP.storage.saveForm('ppSimForm');
+      },
+
+      calcISA() {
+        const form = document.getElementById('isaForm');
+        const isaAmount = Number(form.isaAmount.value.replace(/[^0-9]/g, '')) * 10000;
+        const isaProfit = Number(form.isaProfit.value.replace(/[^0-9]/g, '')) * 10000;
+        const isaSalary = Number(form.isaSalary.value.replace(/[^0-9]/g, '')) * 10000;
+
+        const creditRate = isaSalary <= 55000000 ? 0.165 : 0.132;
+        const extraBase = Math.min(isaAmount * 0.1, 3000000); // 전환금의 10%, 최대 300만원
+        const extraCredit = Math.round(extraBase * creditRate);
+
+        document.getElementById('isa-empty').style.display = 'none';
+        document.getElementById('isa-result').style.display = '';
+
+        document.getElementById('isa-keep-amount').textContent = APP.format.manwon(isaAmount);
+        document.getElementById('isa-keep-benefit').textContent = APP.format.manwon(isaProfit) + ' 비과세';
+        document.getElementById('isa-conv-amount').textContent = APP.format.manwon(isaAmount);
+        document.getElementById('isa-conv-extra-base').textContent = APP.format.manwon(extraBase);
+        document.getElementById('isa-conv-credit').textContent = '+' + APP.format.manwon(extraCredit);
+        document.getElementById('isa-conv-total').textContent = APP.format.manwon(isaProfit + extraCredit) + ' 혜택';
+
+        document.getElementById('isa-summary').innerHTML =
+          `ISA 만기 자금 <strong>${APP.format.manwon(isaAmount)}</strong>을 연금전환하면:<br>` +
+          `• 추가 세액공제 대상: <strong>${APP.format.manwon(extraBase)}</strong><br>` +
+          `• 세액공제 환급: <strong>${APP.format.manwon(extraCredit)}</strong> (공제율 ${APP.format.percent(creditRate)})<br>` +
+          `• 기존 비과세 혜택 ${APP.format.manwon(isaProfit)}도 그대로 유지됩니다.<br>` +
+          `<strong>※ ISA 만기 후 60일 이내</strong>에 연금계좌로 전환해야 합니다.`;
+      },
+
+      calcWithdraw() {
+        const form = document.getElementById('ppWithdrawForm');
+        const totalBalance = Number(form.totalBalance.value.replace(/[^0-9]/g, '')) * 10000;
+        const withdrawAge = Number(form.withdrawAge.value) || 55;
+        const annualWithdraw = Number(form.annualWithdraw.value.replace(/[^0-9]/g, '')) * 10000;
+        const otherIncome = Number(form.otherIncome.value.replace(/[^0-9]/g, '')) * 10000;
+
+        // 수령 가능 기간
+        const withdrawYears = annualWithdraw > 0 ? Math.floor(totalBalance / annualWithdraw) : 0;
+
+        // 분리과세 한도 체크
+        const separateLimit = CONSTANTS.TAX.PRIVATE_PENSION_SEPARATE_LIMIT;
+        const isSeparable = annualWithdraw <= separateLimit;
+
+        // 분리과세 vs 종합과세 비교
+        const taxComparison = CalcEngine.tax.comparePrivatePensionTax(annualWithdraw, otherIncome, withdrawAge);
+
+        document.getElementById('wd-empty').style.display = 'none';
+        document.getElementById('wd-result').style.display = '';
+
+        document.getElementById('wd-annual').textContent = APP.format.manwon(annualWithdraw);
+        document.getElementById('wd-years').textContent = withdrawYears + '년';
+        document.getElementById('wd-separate').textContent = isSeparable ? '가능 (저율)' : '선택 가능';
+
+        const recommendedTax = taxComparison.recommended === '분리과세'
+          ? taxComparison.separate.totalTax
+          : taxComparison.comprehensive.additionalTax;
+        document.getElementById('wd-tax').textContent = APP.format.manwon(recommendedTax);
+
+        // 비교 카드
+        document.getElementById('wd-sep-rate').textContent = APP.format.percent(taxComparison.separate.rate);
+        document.getElementById('wd-sep-tax').textContent = APP.format.manwon(taxComparison.separate.totalTax);
+        document.getElementById('wd-comp-income').textContent = APP.format.manwon(taxComparison.comprehensive.totalIncome);
+        document.getElementById('wd-comp-tax').textContent = APP.format.manwon(taxComparison.comprehensive.additionalTax);
+
+        const sepCard = document.getElementById('wd-sep-card');
+        const compCard = document.getElementById('wd-comp-card');
+        if (taxComparison.recommended === '분리과세') {
+          sepCard.classList.add('recommended');
+          compCard.classList.remove('recommended');
+        } else {
+          compCard.classList.add('recommended');
+          sepCard.classList.remove('recommended');
+        }
+
+        document.getElementById('wd-recommend-text').innerHTML =
+          `<strong>${taxComparison.recommended}이 유리합니다.</strong> ` +
+          `절세 효과: <strong>${APP.format.manwon(taxComparison.saving)}</strong><br>` +
+          (isSeparable
+            ? `연간 수령액이 1,500만원 이하이므로 저율 분리과세(${APP.format.percent(taxComparison.separate.rate)})가 적용됩니다.`
+            : `연간 수령액이 1,500만원을 초과하므로 15% 분리과세 또는 종합과세 중 선택할 수 있습니다.`);
+
+        // 연금수령 한도 테이블
+        const divisors = CONSTANTS.PERSONAL_PENSION.ANNUAL_WITHDRAWAL_DIVISOR;
+        let limitBalance = totalBalance;
+        const limitRows = [];
+        for (let year = 1; year <= 15; year++) {
+          const divisor = year <= 5 ? 11 : (year <= 10 ? 9 : 3);
+          const annualLimit = Math.round(limitBalance * 1.2 / divisor);
+          const monthlyLimit = Math.round(annualLimit / 12);
+          limitRows.push(`
+            <tr${annualWithdraw > annualLimit ? ' style="background:var(--danger-alpha);"' : ''}>
+              <td>${year}년차</td>
+              <td>÷ ${divisor}</td>
+              <td>${APP.format.manwon(annualLimit)}</td>
+              <td>${APP.format.manwon(monthlyLimit)}</td>
+            </tr>
+          `);
+          limitBalance -= Math.min(annualWithdraw, annualLimit);
+          if (limitBalance <= 0) break;
+        }
+        document.getElementById('wd-limit-table').innerHTML = limitRows.join('');
+
+        APP.storage.saveForm('ppWithdrawForm');
+      },
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      APP.storage.restoreForm('ppSimForm');
+      APP.storage.restoreForm('isaForm');
+      APP.storage.restoreForm('ppWithdrawForm');
+    });
+  </script>
+</body>
+</html>

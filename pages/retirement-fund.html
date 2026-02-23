@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>노후자금 설계 - 연금 포털</title>
+  <link rel="stylesheet" href="../css/common.css">
+  <link rel="stylesheet" href="../css/calculator.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <nav id="main-nav"></nav>
+
+  <div class="container">
+    <div class="page-header fade-in">
+      <h1 class="page-title">노후자금 설계</h1>
+      <p class="page-subtitle">은퇴 후 필요자금, 자산 소진 시점, 인출 전략을 설계합니다</p>
+    </div>
+
+    <div class="info-box info fade-in">
+      <span class="icon">💡</span>
+      <div>
+        <strong>노후 적정 생활비 참고 (2025년, 한국보건사회연구원)</strong><br>
+        • 개인: 최소 131만원 / 적정 193만원 &nbsp;&nbsp;• 부부: 최소 198만원 / 적정 294만원
+      </div>
+    </div>
+
+    <div class="tabs fade-in">
+      <button class="tab-btn active" onclick="RetireFund.switchTab('need', this)">필요자금 계산</button>
+      <button class="tab-btn" onclick="RetireFund.switchTab('asset', this)">자산 소진 분석</button>
+      <button class="tab-btn" onclick="RetireFund.switchTab('withdraw', this)">인출 전략 비교</button>
+    </div>
+
+    <!-- ==============================
+         탭1: 필요자금 계산
+         ============================== -->
+    <div class="tab-content active" id="tab-need">
+      <div class="calc-layout">
+        <div class="calc-input-panel">
+          <div class="card">
+            <h2 class="card-title"><span class="card-icon">📝</span>기본 조건</h2>
+            <form id="rfNeedForm">
+              <div class="form-group">
+                <label class="form-label">은퇴 나이</label>
+                <div class="input-group">
+                  <input type="number" class="form-input" name="retireAge" value="60" min="50" max="75">
+                  <span class="input-suffix">세</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">기대수명</label>
+                <div class="input-group">
+                  <input type="number" class="form-input" name="endAge" value="90" min="70" max="110">
+                  <span class="input-suffix">세</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">월 희망 생활비 <span class="unit">(만원)</span></label>
+                <div class="input-group">
+                  <input type="text" class="form-input" name="monthlyExpense" data-type="money" value="250">
+                  <span class="input-suffix">만원</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">물가상승률 <span class="unit">(%)</span></label>
+                <div class="form-range-container">
+                  <input type="range" class="form-range" name="inflation" min="1" max="5" step="0.5" value="2.5" oninput="document.getElementById('infVal').textContent=this.value+'%'">
+                  <span class="range-value" id="infVal">2.5%</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">투자수익률 <span class="unit">(%)</span></label>
+                <div class="form-range-container">
+                  <input type="range" class="form-range" name="returnRate" min="1" max="8" step="0.5" value="4" oninput="document.getElementById('retVal').textContent=this.value+'%'">
+                  <span class="range-value" id="retVal">4%</span>
+                </div>
+              </div>
+              <button type="button" class="btn btn-primary btn-block btn-lg" onclick="RetireFund.calcNeed()">계산하기</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="calc-result-panel">
+          <div id="nd-empty" class="card">
+            <div class="empty-result">
+              <div class="icon">🏦</div>
+              <div class="text">조건을 입력하고 계산하기를 눌러주세요</div>
+            </div>
+          </div>
+
+          <div id="nd-result" style="display:none;">
+            <div class="result-banner fade-in">
+              <div class="label">은퇴 시점 필요자금 (현재가치)</div>
+              <div class="amount" id="nd-pv">-</div>
+              <div class="sub" id="nd-info">-</div>
+            </div>
+
+            <div class="result-mini-grid fade-in">
+              <div class="result-mini">
+                <div class="label">명목 총 필요액</div>
+                <div class="value" id="nd-nominal">-</div>
+              </div>
+              <div class="result-mini">
+                <div class="label">은퇴 기간</div>
+                <div class="value" id="nd-years">-</div>
+              </div>
+              <div class="result-mini">
+                <div class="label">80세 시 월생활비</div>
+                <div class="value orange" id="nd-80cost">-</div>
+              </div>
+            </div>
+
+            <div class="card fade-in">
+              <h2 class="card-title"><span class="card-icon">📊</span>연간 필요생활비 추이 (물가반영)</h2>
+              <div class="chart-container tall">
+                <canvas id="ndChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==============================
+         탭2: 자산 소진 분석
+         ============================== -->
+    <div class="tab-content" id="tab-asset">
+      <div class="calc-layout">
+        <div class="calc-input-panel">
+          <div class="card">
+            <h2 class="card-title"><span class="card-icon">📝</span>자산 및 연금 정보</h2>
+            <form id="rfAssetForm">
+              <div class="form-group">
+                <label class="form-label">보유 금융자산 <span class="unit">(만원)</span></label>
+                <div class="input-group">
+                  <input type="text" class="form-input" name="totalAssets" data-type="money" value="50,000">
+                  <span class="input-suffix">만원</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">월 연금 수령액 <span class="unit">(만원)</span></label>
+                <div class="input-group">
+                  <input type="text" class="form-input" name="monthlyPension" data-type="money" value="150">
+                  <span class="input-suffix">만원</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">월 희망 생활비 <span class="unit">(만원)</span></label>
+                <div class="input-group">
+                  <input type="text" class="form-input" name="monthlyExpense" data-type="money" value="250">
+                  <span class="input-suffix">만원</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">은퇴 나이</label>
+                <div class="input-group">
+                  <input type="number" class="form-input" name="retireAge" value="60" min="50" max="75">
+                  <span class="input-suffix">세</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">기대수명</label>
+                <div class="input-group">
+                  <input type="number" class="form-input" name="endAge" value="90" min="70" max="110">
+                  <span class="input-suffix">세</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">투자수익률 / 물가상승률 <span class="unit">(%)</span></label>
+                <div class="form-inline">
+                  <div class="form-group">
+                    <div class="input-group">
+                      <input type="number" class="form-input" name="returnRate" value="4" step="0.5" min="0" max="10">
+                      <span class="input-suffix">%수익</span>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <div class="input-group">
+                      <input type="number" class="form-input" name="inflation" value="2.5" step="0.5" min="0" max="8">
+                      <span class="input-suffix">%물가</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <button type="button" class="btn btn-primary btn-block btn-lg" onclick="RetireFund.calcAsset()">분석하기</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="calc-result-panel">
+          <div id="as-empty" class="card">
+            <div class="empty-result">
+              <div class="icon">📉</div>
+              <div class="text">조건을 입력하고 분석하기를 눌러주세요</div>
+            </div>
+          </div>
+
+          <div id="as-result" style="display:none;">
+            <div class="result-mini-grid fade-in">
+              <div class="result-mini">
+                <div class="label">자산에서 월 인출</div>
+                <div class="value" id="as-from-asset">-</div>
+              </div>
+              <div class="result-mini">
+                <div class="label">연금 수령</div>
+                <div class="value green" id="as-pension">-</div>
+              </div>
+              <div class="result-mini">
+                <div class="label">월 사용 가능</div>
+                <div class="value" id="as-total-monthly">-</div>
+              </div>
+              <div class="result-mini">
+                <div class="label">과부족</div>
+                <div class="value" id="as-gap">-</div>
+              </div>
+            </div>
+
+            <div class="info-box fade-in" id="as-status-box">
+              <span class="icon" id="as-status-icon">-</span>
+              <div id="as-status-text"></div>
+            </div>
+
+            <div class="card fade-in">
+              <h2 class="card-title"><span class="card-icon">📊</span>자산 소진 추이</h2>
+              <div class="chart-container tall">
+                <canvas id="asChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==============================
+         탭3: 인출 전략 비교
+         ============================== -->
+    <div class="tab-content" id="tab-withdraw">
+      <div class="calc-layout">
+        <div class="calc-input-panel">
+          <div class="card">
+            <h2 class="card-title"><span class="card-icon">📝</span>인출 전략 조건</h2>
+            <form id="rfWithdrawForm">
+              <div class="form-group">
+                <label class="form-label">보유 자산 <span class="unit">(만원)</span></label>
+                <div class="input-group">
+                  <input type="text" class="form-input" name="assets" data-type="money" value="50,000">
+                  <span class="input-suffix">만원</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">연간 정액 인출 <span class="unit">(만원)</span></label>
+                <div class="input-group">
+                  <input type="text" class="form-input" name="annualWithdraw" data-type="money" value="2,400">
+                  <span class="input-suffix">만원</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">정률 인출률 <span class="unit">(%)</span></label>
+                <div class="form-range-container">
+                  <input type="range" class="form-range" name="withdrawRate" min="2" max="8" step="0.5" value="4" oninput="document.getElementById('wrVal').textContent=this.value+'%'">
+                  <span class="range-value" id="wrVal">4%</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">투자수익률 <span class="unit">(%)</span></label>
+                <div class="input-group">
+                  <input type="number" class="form-input" name="returnRate" value="4" step="0.5" min="0" max="10">
+                  <span class="input-suffix">%</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">물가상승률 <span class="unit">(%)</span></label>
+                <div class="input-group">
+                  <input type="number" class="form-input" name="inflation" value="2.5" step="0.5" min="0" max="8">
+                  <span class="input-suffix">%</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">시뮬레이션 기간</label>
+                <div class="input-group">
+                  <input type="number" class="form-input" name="simYears" value="30" min="10" max="50">
+                  <span class="input-suffix">년</span>
+                </div>
+              </div>
+              <button type="button" class="btn btn-primary btn-block btn-lg" onclick="RetireFund.calcWithdraw()">비교하기</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="calc-result-panel">
+          <div id="wd-empty" class="card">
+            <div class="empty-result">
+              <div class="icon">📋</div>
+              <div class="text">조건을 입력하고 비교하기를 눌러주세요</div>
+              <div class="sub-text">정액/정률/버킷 3가지 인출 전략을 비교합니다</div>
+            </div>
+          </div>
+
+          <div id="wd-result" style="display:none;">
+            <div class="scenario-cards fade-in">
+              <div class="scenario-card">
+                <div class="scenario-label" style="color:var(--primary);">정액 인출</div>
+                <div class="scenario-desc">매년 고정 금액 인출 (물가 조정)</div>
+                <div class="scenario-value" id="wd-fixed-last">-</div>
+                <div class="scenario-desc" id="wd-fixed-desc">-</div>
+              </div>
+              <div class="scenario-card">
+                <div class="scenario-label" style="color:var(--secondary);">정률 인출</div>
+                <div class="scenario-desc">잔액의 일정 비율 인출</div>
+                <div class="scenario-value" id="wd-rate-last">-</div>
+                <div class="scenario-desc" id="wd-rate-desc">-</div>
+              </div>
+              <div class="scenario-card">
+                <div class="scenario-label" style="color:var(--accent);">버킷 전략</div>
+                <div class="scenario-desc">단기/중기/장기 3개 버킷</div>
+                <div class="scenario-value" id="wd-bucket-last">-</div>
+                <div class="scenario-desc" id="wd-bucket-desc">-</div>
+              </div>
+            </div>
+
+            <div class="card fade-in">
+              <h2 class="card-title"><span class="card-icon">📊</span>인출 전략별 자산 추이</h2>
+              <div class="chart-container tall">
+                <canvas id="wdChart"></canvas>
+              </div>
+            </div>
+
+            <div class="card fade-in">
+              <h2 class="card-title"><span class="card-icon">📋</span>전략별 특징 비교</h2>
+              <div class="table-responsive">
+                <table class="data-table">
+                  <thead>
+                    <tr><th>전략</th><th>장점</th><th>단점</th><th>적합 대상</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><strong>정액 인출</strong></td>
+                      <td>생활비 예측 용이</td>
+                      <td>하락장에 자산 급감</td>
+                      <td>안정적 현금흐름 필요 시</td>
+                    </tr>
+                    <tr>
+                      <td><strong>정률 인출</strong></td>
+                      <td>자산 고갈 방지</td>
+                      <td>인출액 변동 큼</td>
+                      <td>유연한 지출 가능 시</td>
+                    </tr>
+                    <tr>
+                      <td><strong>버킷 전략</strong></td>
+                      <td>안정+성장 균형</td>
+                      <td>관리 복잡</td>
+                      <td>자산규모 큰 경우</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer id="footer"></footer>
+
+  <script src="../js/constants.js"></script>
+  <script src="../js/calculator-engine.js"></script>
+  <script src="../js/common.js"></script>
+  <script>
+    const RetireFund = {
+      switchTab(tabId, btn) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('tab-' + tabId).classList.add('active');
+        btn.classList.add('active');
+        APP.input.initMoneyFields();
+      },
+
+      calcNeed() {
+        const form = document.getElementById('rfNeedForm');
+        const retireAge = Number(form.retireAge.value) || 60;
+        const endAge = Number(form.endAge.value) || 90;
+        const monthlyExpense = Number(form.monthlyExpense.value.replace(/[^0-9]/g, '')) * 10000;
+        const inflation = Number(form.inflation.value) / 100;
+        const returnRate = Number(form.returnRate.value) / 100;
+
+        const result = CalcEngine.retirementFund.calcRequiredFund(monthlyExpense, retireAge, endAge, inflation, returnRate);
+
+        // 80세 시점 월생활비
+        const years80 = Math.max(80 - retireAge, 0);
+        const cost80 = monthlyExpense * Math.pow(1 + inflation, years80);
+
+        document.getElementById('nd-empty').style.display = 'none';
+        document.getElementById('nd-result').style.display = '';
+
+        document.getElementById('nd-pv').textContent = APP.format.manwon(result.presentValue);
+        document.getElementById('nd-info').textContent = `${retireAge}세~${endAge}세, 월 ${APP.format.manwon(monthlyExpense)} 기준`;
+        document.getElementById('nd-nominal').textContent = APP.format.manwon(result.nominalTotal);
+        document.getElementById('nd-years').textContent = result.years + '년';
+        document.getElementById('nd-80cost').textContent = APP.format.manwon(cost80);
+
+        // 차트
+        const ages = result.yearlyData.map(d => d.age + '세');
+        const expenses = result.yearlyData.map(d => Math.round(d.annualExpense / 10000));
+
+        APP.chart.create('ndChart', {
+          type: 'bar',
+          data: {
+            labels: ages,
+            datasets: [{
+              label: '연간 필요생활비 (만원)',
+              data: expenses,
+              backgroundColor: expenses.map((_, i) => {
+                const ratio = i / expenses.length;
+                return ratio < 0.33 ? APP.chart.colors.primaryAlpha
+                  : ratio < 0.66 ? APP.chart.colors.accentAlpha
+                  : APP.chart.colors.dangerAlpha;
+              }),
+              borderColor: expenses.map((_, i) => {
+                const ratio = i / expenses.length;
+                return ratio < 0.33 ? APP.chart.colors.primary
+                  : ratio < 0.66 ? APP.chart.colors.accent
+                  : APP.chart.colors.danger;
+              }),
+              borderWidth: 1,
+            }]
+          },
+          options: {
+            plugins: {
+              title: { display: true, text: '연간 필요생활비 (물가상승 반영)', font: { size: 16 } }
+            },
+            scales: { y: { title: { display: true, text: '만원' }, beginAtZero: true } }
+          }
+        });
+
+        APP.storage.saveForm('rfNeedForm');
+      },
+
+      calcAsset() {
+        const form = document.getElementById('rfAssetForm');
+        const getVal = (name) => Number(form[name].value.replace(/[^0-9]/g, '')) * 10000;
+
+        const totalAssets = getVal('totalAssets');
+        const monthlyPension = getVal('monthlyPension');
+        const monthlyExpense = getVal('monthlyExpense');
+        const retireAge = Number(form.retireAge.value) || 60;
+        const endAge = Number(form.endAge.value) || 90;
+        const returnRate = Number(form.returnRate.value) / 100;
+        const inflation = Number(form.inflation.value) / 100;
+
+        const result = CalcEngine.retirementFund.calcAvailableMonthly(
+          totalAssets, monthlyPension, retireAge, endAge, returnRate, inflation
+        );
+
+        const gap = result.totalMonthly - monthlyExpense;
+
+        // 소진 시점
+        let depletionAge = endAge;
+        for (const item of result.assetTimeline) {
+          if (item.balance <= 0) { depletionAge = item.age; break; }
+        }
+
+        document.getElementById('as-empty').style.display = 'none';
+        document.getElementById('as-result').style.display = '';
+
+        document.getElementById('as-from-asset').textContent = APP.format.manwon(result.monthlyFromAssets);
+        document.getElementById('as-pension').textContent = APP.format.manwon(monthlyPension);
+        document.getElementById('as-total-monthly').textContent = APP.format.manwon(result.totalMonthly);
+
+        const gapEl = document.getElementById('as-gap');
+        if (gap >= 0) {
+          gapEl.textContent = '+' + APP.format.manwon(gap);
+          gapEl.className = 'value green';
+        } else {
+          gapEl.textContent = APP.format.manwon(gap);
+          gapEl.className = 'value red';
+        }
+
+        const statusBox = document.getElementById('as-status-box');
+        if (depletionAge >= endAge) {
+          statusBox.className = 'info-box success fade-in';
+          document.getElementById('as-status-icon').textContent = '✅';
+          document.getElementById('as-status-text').innerHTML =
+            `<strong>자산이 ${endAge}세까지 유지됩니다.</strong> 월 ${APP.format.manwon(result.totalMonthly)} 사용 가능합니다.`;
+        } else {
+          statusBox.className = 'info-box danger fade-in';
+          document.getElementById('as-status-icon').textContent = '⚠️';
+          document.getElementById('as-status-text').innerHTML =
+            `<strong>${depletionAge}세에 자산이 소진됩니다.</strong> 생활비를 줄이거나 추가 소득원이 필요합니다.`;
+        }
+
+        // 차트
+        const ages = result.assetTimeline.map(d => d.age + '세');
+        const balances = result.assetTimeline.map(d => Math.round(d.balance / 10000));
+
+        APP.chart.create('asChart', {
+          type: 'line',
+          data: {
+            labels: ages,
+            datasets: [{
+              label: '잔여 자산 (만원)',
+              data: balances,
+              borderColor: APP.chart.colors.primary,
+              backgroundColor: (ctx) => {
+                const chart = ctx.chart;
+                const {ctx: c, chartArea} = chart;
+                if (!chartArea) return APP.chart.colors.primaryAlpha;
+                const gradient = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                gradient.addColorStop(0, 'rgba(46,139,87,0.3)');
+                gradient.addColorStop(1, 'rgba(220,53,69,0.3)');
+                return gradient;
+              },
+              fill: true, tension: 0.3,
+            }]
+          },
+          options: {
+            plugins: {
+              title: { display: true, text: '보유 자산 추이', font: { size: 16 } }
+            },
+            scales: {
+              y: { title: { display: true, text: '만원' }, beginAtZero: true }
+            }
+          }
+        });
+
+        APP.storage.saveForm('rfAssetForm');
+      },
+
+      calcWithdraw() {
+        const form = document.getElementById('rfWithdrawForm');
+        const assets = Number(form.assets.value.replace(/[^0-9]/g, '')) * 10000;
+        const annualWithdraw = Number(form.annualWithdraw.value.replace(/[^0-9]/g, '')) * 10000;
+        const withdrawRate = Number(form.withdrawRate.value) / 100;
+        const returnRate = Number(form.returnRate.value) / 100;
+        const inflation = Number(form.inflation.value) / 100;
+        const simYears = Number(form.simYears.value) || 30;
+
+        const result = CalcEngine.retirementFund.simulateWithdrawal(
+          assets, annualWithdraw, withdrawRate, returnRate, inflation, simYears
+        );
+
+        document.getElementById('wd-empty').style.display = 'none';
+        document.getElementById('wd-result').style.display = '';
+
+        // 소진 연도 찾기
+        const findDepletion = (arr) => {
+          const idx = arr.findIndex(v => v <= 0);
+          return idx >= 0 ? (idx + 1) + '년차 소진' : simYears + '년 후 ' + APP.format.manwon(arr[arr.length - 1]);
+        };
+
+        document.getElementById('wd-fixed-last').textContent = APP.format.manwon(result.fixed[result.fixed.length - 1]);
+        document.getElementById('wd-fixed-desc').textContent = findDepletion(result.fixed);
+        document.getElementById('wd-rate-last').textContent = APP.format.manwon(result.rate[result.rate.length - 1]);
+        document.getElementById('wd-rate-desc').textContent = '자산 고갈 없음 (인출액 감소)';
+        document.getElementById('wd-bucket-last').textContent = APP.format.manwon(result.bucket[result.bucket.length - 1]);
+        document.getElementById('wd-bucket-desc').textContent = findDepletion(result.bucket);
+
+        // best 표시
+        const lastValues = [result.fixed[result.fixed.length-1], result.rate[result.rate.length-1], result.bucket[result.bucket.length-1]];
+        const maxIdx = lastValues.indexOf(Math.max(...lastValues));
+        document.querySelectorAll('#wd-result .scenario-card').forEach((c, i) => {
+          c.classList.toggle('best', i === maxIdx);
+        });
+
+        // 차트
+        const labels = Array.from({length: simYears}, (_, i) => (i + 1) + '년');
+
+        APP.chart.create('wdChart', {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [
+              {
+                label: '정액 인출',
+                data: result.fixed.map(v => Math.round(v / 10000)),
+                borderColor: APP.chart.colors.primary,
+                tension: 0.3, fill: false,
+              },
+              {
+                label: '정률 인출',
+                data: result.rate.map(v => Math.round(v / 10000)),
+                borderColor: APP.chart.colors.secondary,
+                tension: 0.3, fill: false,
+              },
+              {
+                label: '버킷 전략',
+                data: result.bucket.map(v => Math.round(v / 10000)),
+                borderColor: APP.chart.colors.accent,
+                tension: 0.3, fill: false,
+                borderDash: [5, 5],
+              }
+            ]
+          },
+          options: {
+            plugins: {
+              title: { display: true, text: '인출 전략별 자산 잔액 추이 (만원)', font: { size: 16 } }
+            },
+            scales: {
+              y: { title: { display: true, text: '만원' }, beginAtZero: true }
+            }
+          }
+        });
+
+        APP.storage.saveForm('rfWithdrawForm');
+      },
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      APP.storage.restoreForm('rfNeedForm');
+      APP.storage.restoreForm('rfAssetForm');
+      APP.storage.restoreForm('rfWithdrawForm');
+    });
+  </script>
+</body>
+</html>

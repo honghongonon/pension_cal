@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>건강보험료 계산기 - 연금 포털</title>
+  <link rel="stylesheet" href="../css/common.css">
+  <link rel="stylesheet" href="../css/calculator.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <nav id="main-nav"></nav>
+
+  <div class="container">
+    <div class="page-header fade-in">
+      <h1 class="page-title">건강보험료 계산기</h1>
+      <p class="page-subtitle">퇴직 후 지역가입자 보험료, 피부양자 판정, 임의계속가입 비교</p>
+    </div>
+
+    <div class="info-box info fade-in">
+      <span class="icon">💡</span>
+      <div>
+        <strong>퇴직 후 건강보험 3가지 선택지</strong><br>
+        ① 가족의 <strong>피부양자</strong> 등록 (보험료 0원, 소득·재산 요건 충족 시)<br>
+        ② <strong>임의계속가입</strong> (퇴직 전 보험료 유지, 최대 3년)<br>
+        ③ <strong>지역가입자</strong> 전환 (소득+재산+자동차 기준 부과)
+      </div>
+    </div>
+
+    <!-- 탭 -->
+    <div class="tabs fade-in">
+      <button class="tab-btn active" onclick="HealthIns.switchTab('regional', this)">지역가입자 보험료</button>
+      <button class="tab-btn" onclick="HealthIns.switchTab('dependent', this)">피부양자 판정</button>
+      <button class="tab-btn" onclick="HealthIns.switchTab('compare', this)">임의계속 vs 지역</button>
+    </div>
+
+    <!-- ==============================
+         탭1: 지역가입자 보험료
+         ============================== -->
+    <div class="tab-content active" id="tab-regional">
+      <div class="calc-layout">
+        <div class="calc-input-panel">
+          <div class="card">
+            <h2 class="card-title"><span class="card-icon">📝</span>소득·재산 정보</h2>
+            <form id="hiRegionalForm">
+              <div class="input-section">
+                <div class="input-section-title">소득 (연간)</div>
+                <div class="form-group">
+                  <label class="form-label">연금소득 <span class="unit">(만원/년)</span></label>
+                  <div class="input-group">
+                    <input type="text" class="form-input" name="pensionIncome" data-type="money" value="1,200">
+                    <span class="input-suffix">만원</span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">이자·배당·사업·기타소득 <span class="unit">(만원/년)</span></label>
+                  <div class="input-group">
+                    <input type="text" class="form-input" name="otherIncome" data-type="money" value="0">
+                    <span class="input-suffix">만원</span>
+                  </div>
+                </div>
+              </div>
+              <div class="input-section">
+                <div class="input-section-title">재산</div>
+                <div class="form-group">
+                  <label class="form-label">재산세 과표 <span class="unit">(만원)</span>
+                    <span class="tooltip-trigger" data-tooltip="재산세 과세표준 = 공시가격의 약 60%. 아파트 공시가 5억이면 과표 약 3억입니다.">?</span>
+                  </label>
+                  <div class="input-group">
+                    <input type="text" class="form-input" name="propertyValue" data-type="money" value="30,000">
+                    <span class="input-suffix">만원</span>
+                  </div>
+                </div>
+              </div>
+              <div class="input-section">
+                <div class="input-section-title">자동차</div>
+                <div class="form-group">
+                  <label class="form-label">자동차 가액 <span class="unit">(만원)</span></label>
+                  <div class="input-group">
+                    <input type="text" class="form-input" name="carValue" data-type="money" value="0">
+                    <span class="input-suffix">만원</span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">배기량 <span class="unit">(cc)</span></label>
+                  <div class="input-group">
+                    <input type="number" class="form-input" name="carCC" value="0" min="0" max="10000">
+                    <span class="input-suffix">cc</span>
+                  </div>
+                </div>
+              </div>
+              <button type="button" class="btn btn-primary btn-block btn-lg" onclick="HealthIns.calcRegional()">계산하기</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="calc-result-panel">
+          <div id="rg-empty" class="card">
+            <div class="empty-result">
+              <div class="icon">🏥</div>
+              <div class="text">소득·재산 정보를 입력하고 계산하기를 눌러주세요</div>
+            </div>
+          </div>
+
+          <div id="rg-result" style="display:none;">
+            <div class="result-banner fade-in">
+              <div class="label">월 건강보험료 (장기요양 포함)</div>
+              <div class="amount" id="rg-total">-</div>
+              <div class="sub">건강보험료 + 장기요양보험료</div>
+            </div>
+
+            <div class="result-mini-grid fade-in">
+              <div class="result-mini">
+                <div class="label">건강보험료</div>
+                <div class="value" id="rg-health">-</div>
+              </div>
+              <div class="result-mini">
+                <div class="label">장기요양보험료</div>
+                <div class="value" id="rg-ltc">-</div>
+              </div>
+              <div class="result-mini">
+                <div class="label">연간 합계</div>
+                <div class="value red" id="rg-annual">-</div>
+              </div>
+            </div>
+
+            <div class="card fade-in">
+              <h2 class="card-title"><span class="card-icon">📊</span>보험료 구성</h2>
+              <div class="chart-container">
+                <canvas id="rgChart"></canvas>
+              </div>
+            </div>
+
+            <div class="card fade-in">
+              <h2 class="card-title"><span class="card-icon">🔍</span>산출 내역</h2>
+              <div class="result-details" id="rg-details"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==============================
+         탭2: 피부양자 판정
+         ============================== -->
+    <div class="tab-content" id="tab-dependent">
+      <div class="calc-layout">
+        <div class="calc-input-panel">
+          <div class="card">
+            <h2 class="card-title"><span class="card-icon">📝</span>피부양자 요건 확인</h2>
+            <form id="hiDependentForm">
+              <div class="form-group">
+                <label class="form-label">연간 소득 합계 <span class="unit">(만원)</span>
+                  <span class="tooltip-trigger" data-tooltip="이자·배당·사업·근로·연금·기타소득 합계. 국민연금 등 공적연금 포함.">?</span>
+                </label>
+                <div class="input-group">
+                  <input type="text" class="form-input" name="annualIncome" data-type="money" value="1,500">
+                  <span class="input-suffix">만원</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">재산세 과표 <span class="unit">(만원)</span></label>
+                <div class="input-group">
+                  <input type="text" class="form-input" name="propertyTax" data-type="money" value="30,000">
+                  <span class="input-suffix">만원</span>
+                </div>
+              </div>
+              <button type="button" class="btn btn-primary btn-block btn-lg" onclick="HealthIns.calcDependent()">판정하기</button>
+            </form>
+
+            <div class="info-box info" style="margin-top:20px;">
+              <span class="icon">📌</span>
+              <div>
+                <strong>피부양자 자격 요건 (2025~2026)</strong><br>
+                • 소득: 연 2,000만원 이하<br>
+                • 재산: 과세표준 5.4억 이하<br>
+                • 재산 9억 초과 시: 소득 1,000만원 이하
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="calc-result-panel">
+          <div id="dp-empty" class="card">
+            <div class="empty-result">
+              <div class="icon">👨‍👩‍👦</div>
+              <div class="text">소득·재산 정보를 입력하고 판정하기를 눌러주세요</div>
+            </div>
+          </div>
+
+          <div id="dp-result" style="display:none;">
+            <div class="result-banner fade-in" id="dp-banner">
+              <div class="label">피부양자 자격</div>
+              <div class="amount" id="dp-status">-</div>
+              <div class="sub" id="dp-sub">-</div>
+            </div>
+
+            <div class="card fade-in">
+              <h2 class="card-title"><span class="card-icon">📋</span>판정 상세</h2>
+              <div id="dp-reasons"></div>
+            </div>
+
+            <div class="card fade-in" id="dp-alt-card" style="display:none;">
+              <h2 class="card-title"><span class="card-icon">💡</span>피부양자 탈락 시 대안</h2>
+              <div class="result-details">
+                <div class="result-row">
+                  <span class="label">예상 지역가입자 보험료</span>
+                  <span class="value negative" id="dp-alt-regional">-</span>
+                </div>
+                <div class="result-row">
+                  <span class="label">연간 부담액</span>
+                  <span class="value negative" id="dp-alt-annual">-</span>
+                </div>
+              </div>
+              <div class="info-box warning" style="margin-top:12px;">
+                <span class="icon">⚠️</span>
+                <div>피부양자 자격을 유지하려면 소득을 줄이거나 재산을 조정하는 것이 유리할 수 있습니다. 특히 <strong>연금 수령액 조절</strong>이 효과적입니다.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==============================
+         탭3: 임의계속 vs 지역
+         ============================== -->
+    <div class="tab-content" id="tab-compare">
+      <div class="calc-layout">
+        <div class="calc-input-panel">
+          <div class="card">
+            <h2 class="card-title"><span class="card-icon">📝</span>비교 조건 입력</h2>
+            <form id="hiCompareForm">
+              <div class="input-section">
+                <div class="input-section-title">퇴직 전 정보</div>
+                <div class="form-group">
+                  <label class="form-label">퇴직 전 월급여 <span class="unit">(만원)</span></label>
+                  <div class="input-group">
+                    <input type="text" class="form-input" name="lastSalary" data-type="money" value="400">
+                    <span class="input-suffix">만원</span>
+                  </div>
+                </div>
+              </div>
+              <div class="input-section">
+                <div class="input-section-title">퇴직 후 정보</div>
+                <div class="form-group">
+                  <label class="form-label">퇴직 후 연간소득 <span class="unit">(만원)</span></label>
+                  <div class="input-group">
+                    <input type="text" class="form-input" name="postIncome" data-type="money" value="1,200">
+                    <span class="input-suffix">만원</span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">재산세 과표 <span class="unit">(만원)</span></label>
+                  <div class="input-group">
+                    <input type="text" class="form-input" name="postProperty" data-type="money" value="30,000">
+                    <span class="input-suffix">만원</span>
+                  </div>
+                </div>
+              </div>
+              <button type="button" class="btn btn-primary btn-block btn-lg" onclick="HealthIns.calcCompare()">비교하기</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="calc-result-panel">
+          <div id="cm-empty" class="card">
+            <div class="empty-result">
+              <div class="icon">⚖️</div>
+              <div class="text">조건을 입력하고 비교하기를 눌러주세요</div>
+            </div>
+          </div>
+
+          <div id="cm-result" style="display:none;">
+            <div class="compare-grid fade-in">
+              <div class="compare-card" id="cm-vol-card">
+                <span class="badge blue">임의계속가입</span>
+                <div class="result-row">
+                  <span class="label">월 보험료</span>
+                  <span class="value highlight" id="cm-vol-monthly">-</span>
+                </div>
+                <div class="result-row">
+                  <span class="label">장기요양</span>
+                  <span class="value" id="cm-vol-ltc">-</span>
+                </div>
+                <div class="result-row">
+                  <span class="label">월 합계</span>
+                  <span class="value highlight" id="cm-vol-total">-</span>
+                </div>
+                <div class="result-row">
+                  <span class="label">유지 기간</span>
+                  <span class="value">최대 3년</span>
+                </div>
+              </div>
+              <div class="compare-vs">VS</div>
+              <div class="compare-card" id="cm-reg-card">
+                <span class="badge orange">지역가입자</span>
+                <div class="result-row">
+                  <span class="label">월 보험료</span>
+                  <span class="value highlight" id="cm-reg-monthly">-</span>
+                </div>
+                <div class="result-row">
+                  <span class="label">장기요양</span>
+                  <span class="value" id="cm-reg-ltc">-</span>
+                </div>
+                <div class="result-row">
+                  <span class="label">월 합계</span>
+                  <span class="value highlight" id="cm-reg-total">-</span>
+                </div>
+                <div class="result-row">
+                  <span class="label">유지 기간</span>
+                  <span class="value">제한 없음</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="info-box success fade-in">
+              <span class="icon">✅</span>
+              <div id="cm-recommend-text"></div>
+            </div>
+
+            <div class="card fade-in">
+              <h2 class="card-title"><span class="card-icon">📊</span>3년간 보험료 비교</h2>
+              <div class="chart-container">
+                <canvas id="cmChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer id="footer"></footer>
+
+  <script src="../js/constants.js"></script>
+  <script src="../js/calculator-engine.js"></script>
+  <script src="../js/common.js"></script>
+  <script>
+    const HealthIns = {
+      switchTab(tabId, btn) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('tab-' + tabId).classList.add('active');
+        btn.classList.add('active');
+        APP.input.initMoneyFields();
+      },
+
+      calcRegional() {
+        const form = document.getElementById('hiRegionalForm');
+        const getVal = (name) => Number(form[name].value.replace(/[^0-9]/g, '')) * 10000;
+
+        const pensionIncome = getVal('pensionIncome');
+        const otherIncome = getVal('otherIncome');
+        const annualIncome = pensionIncome + otherIncome;
+        const propertyValue = Number(form.propertyValue.value.replace(/[^0-9]/g, ''));
+        const carValue = Number(form.carValue.value.replace(/[^0-9]/g, ''));
+        const carCC = Number(form.carCC.value) || 0;
+
+        const result = CalcEngine.healthInsurance.calcRegionalPremium(annualIncome, propertyValue, carValue, carCC);
+
+        document.getElementById('rg-empty').style.display = 'none';
+        document.getElementById('rg-result').style.display = '';
+
+        document.getElementById('rg-total').textContent = APP.format.won(result.total) + '/월';
+        document.getElementById('rg-health').textContent = APP.format.won(result.monthlyPremium);
+        document.getElementById('rg-ltc').textContent = APP.format.won(result.longTermCare);
+        document.getElementById('rg-annual').textContent = APP.format.manwon(result.total * 12);
+
+        // 구성 내역
+        document.getElementById('rg-details').innerHTML = `
+          <div class="result-row">
+            <span class="label">소득 부분 보험료</span>
+            <span class="value">${APP.format.won(result.breakdown.income)}</span>
+          </div>
+          <div class="result-row">
+            <span class="label">재산 부분 보험료</span>
+            <span class="value">${APP.format.won(result.breakdown.property)}</span>
+          </div>
+          <div class="result-row">
+            <span class="label">자동차 부분 보험료</span>
+            <span class="value">${APP.format.won(result.breakdown.car)}</span>
+          </div>
+          <div class="result-row">
+            <span class="label"><strong>건강보험료 소계</strong></span>
+            <span class="value highlight"><strong>${APP.format.won(result.monthlyPremium)}</strong></span>
+          </div>
+          <div class="result-row">
+            <span class="label">장기요양보험료 (건보료의 ${(CONSTANTS.HEALTH_INSURANCE.LONG_TERM_CARE_RATE * 100).toFixed(2)}%)</span>
+            <span class="value">${APP.format.won(result.longTermCare)}</span>
+          </div>
+          <div class="result-row">
+            <span class="label"><strong>월 납부 합계</strong></span>
+            <span class="value highlight"><strong>${APP.format.won(result.total)}</strong></span>
+          </div>
+        `;
+
+        // 차트
+        APP.chart.create('rgChart', {
+          type: 'doughnut',
+          data: {
+            labels: ['소득 부분', '재산 부분', '자동차 부분', '장기요양'],
+            datasets: [{
+              data: [result.breakdown.income, result.breakdown.property, result.breakdown.car, result.longTermCare],
+              backgroundColor: [APP.chart.colors.primary, APP.chart.colors.accent, APP.chart.colors.info, APP.chart.colors.secondary],
+              borderWidth: 2,
+            }]
+          },
+          options: {
+            plugins: {
+              title: { display: true, text: `월 ${APP.format.won(result.total)} 구성`, font: { size: 16 } }
+            }
+          }
+        });
+
+        APP.storage.saveForm('hiRegionalForm');
+      },
+
+      calcDependent() {
+        const form = document.getElementById('hiDependentForm');
+        const annualIncome = Number(form.annualIncome.value.replace(/[^0-9]/g, '')) * 10000;
+        const propertyTax = Number(form.propertyTax.value.replace(/[^0-9]/g, '')) * 10000;
+
+        const result = CalcEngine.healthInsurance.checkDependentStatus(annualIncome, propertyTax);
+
+        document.getElementById('dp-empty').style.display = 'none';
+        document.getElementById('dp-result').style.display = '';
+
+        const banner = document.getElementById('dp-banner');
+        if (result.qualified) {
+          banner.style.background = 'linear-gradient(135deg, var(--secondary), #1a6b3a)';
+          document.getElementById('dp-status').textContent = '자격 충족 ✓';
+          document.getElementById('dp-sub').textContent = '피부양자로 등록 가능하며 보험료가 면제됩니다';
+          document.getElementById('dp-alt-card').style.display = 'none';
+        } else {
+          banner.style.background = 'linear-gradient(135deg, var(--danger), #a02030)';
+          document.getElementById('dp-status').textContent = '자격 미충족 ✗';
+          document.getElementById('dp-sub').textContent = '피부양자 자격 요건을 충족하지 못합니다';
+
+          // 지역가입자 예상 보험료
+          const regional = CalcEngine.healthInsurance.calcRegionalPremium(annualIncome, propertyTax / 10000, 0, 0);
+          document.getElementById('dp-alt-card').style.display = '';
+          document.getElementById('dp-alt-regional').textContent = APP.format.won(regional.total) + '/월';
+          document.getElementById('dp-alt-annual').textContent = APP.format.manwon(regional.total * 12);
+        }
+
+        // 판정 사유
+        document.getElementById('dp-reasons').innerHTML = result.reasons.map(r =>
+          `<div class="info-box ${result.qualified ? 'success' : 'danger'}" style="margin-bottom:8px;">
+            <span class="icon">${result.qualified ? '✅' : '❌'}</span>
+            <div>${r}</div>
+          </div>`
+        ).join('');
+
+        APP.storage.saveForm('hiDependentForm');
+      },
+
+      calcCompare() {
+        const form = document.getElementById('hiCompareForm');
+        const lastSalary = Number(form.lastSalary.value.replace(/[^0-9]/g, '')) * 10000;
+        const postIncome = Number(form.postIncome.value.replace(/[^0-9]/g, '')) * 10000;
+        const postProperty = Number(form.postProperty.value.replace(/[^0-9]/g, ''));
+
+        const result = CalcEngine.healthInsurance.compareVoluntaryVsRegional(lastSalary, postIncome, postProperty);
+
+        document.getElementById('cm-empty').style.display = 'none';
+        document.getElementById('cm-result').style.display = '';
+
+        document.getElementById('cm-vol-monthly').textContent = APP.format.won(result.voluntary.premium);
+        document.getElementById('cm-vol-ltc').textContent = APP.format.won(result.voluntary.longTermCare);
+        document.getElementById('cm-vol-total').textContent = APP.format.won(result.voluntary.total);
+        document.getElementById('cm-reg-monthly').textContent = APP.format.won(result.regional.premium);
+        document.getElementById('cm-reg-ltc').textContent = APP.format.won(result.regional.longTermCare);
+        document.getElementById('cm-reg-total').textContent = APP.format.won(result.regional.total);
+
+        const volCard = document.getElementById('cm-vol-card');
+        const regCard = document.getElementById('cm-reg-card');
+        if (result.recommended === '임의계속가입') {
+          volCard.classList.add('recommended');
+          regCard.classList.remove('recommended');
+        } else {
+          regCard.classList.add('recommended');
+          volCard.classList.remove('recommended');
+        }
+
+        const saving = Math.abs(result.monthlySaving);
+        document.getElementById('cm-recommend-text').innerHTML =
+          `<strong>${result.recommended}이 유리합니다.</strong> 월 <strong>${APP.format.won(saving)}</strong> 절약<br>` +
+          (result.recommended === '임의계속가입'
+            ? `임의계속가입은 최대 <strong>3년</strong>까지 유지 가능합니다. 3년간 총 <strong>${APP.format.manwon(saving * 36)}</strong> 절약됩니다.`
+            : `지역가입자로 바로 전환하는 것이 더 저렴합니다.`);
+
+        // 3년 비교 차트
+        const labels = [];
+        const volData = [];
+        const regData = [];
+        for (let m = 1; m <= 36; m++) {
+          if (m % 3 === 0 || m === 1) {
+            labels.push(m + '개월');
+            volData.push(result.voluntary.total * m);
+            regData.push(result.regional.total * m);
+          }
+        }
+
+        APP.chart.create('cmChart', {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [
+              {
+                label: '임의계속가입 누적',
+                data: volData.map(v => Math.round(v / 10000)),
+                borderColor: APP.chart.colors.primary,
+                tension: 0.3,
+              },
+              {
+                label: '지역가입자 누적',
+                data: regData.map(v => Math.round(v / 10000)),
+                borderColor: APP.chart.colors.danger,
+                borderDash: [5, 5],
+                tension: 0.3,
+              }
+            ]
+          },
+          options: {
+            plugins: {
+              title: { display: true, text: '3년간 누적 보험료 비교 (만원)', font: { size: 16 } }
+            },
+            scales: { y: { title: { display: true, text: '만원' }, beginAtZero: true } }
+          }
+        });
+
+        APP.storage.saveForm('hiCompareForm');
+      },
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      APP.storage.restoreForm('hiRegionalForm');
+      APP.storage.restoreForm('hiDependentForm');
+      APP.storage.restoreForm('hiCompareForm');
+    });
+  </script>
+</body>
+</html>

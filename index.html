@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>연금/절세/노후자금 종합 포털</title>
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/calculator.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <nav id="main-nav"></nav>
+
+  <div class="container">
+    <!-- 페이지 헤더 -->
+    <div class="page-header fade-in">
+      <h1 class="page-title">연금/절세/노후자금 종합 포털</h1>
+      <p class="page-subtitle">퇴직 전후 연금·세금·건강보험료를 한눈에 계산하고 비교하세요</p>
+    </div>
+
+    <!-- 안내 박스 -->
+    <div class="info-box info fade-in">
+      <span class="icon">💡</span>
+      <div>
+        <strong>이 사이트는 무엇인가요?</strong><br>
+        퇴직 전후 꼭 알아야 할 연금, 절세, 건강보험료 정보를 쉬운 계산기와 함께 제공합니다.
+        각 카드를 클릭하면 상세 계산기로 이동합니다.
+      </div>
+    </div>
+
+    <!-- 간편 입력 (대시보드용) -->
+    <div class="card fade-in" id="quick-input-card">
+      <h2 class="card-title"><span class="card-icon">⚡</span>간편 정보 입력</h2>
+      <p style="color: var(--text-light); margin-bottom: 20px;">기본 정보를 입력하시면 대시보드에 예상 결과를 표시합니다.</p>
+
+      <form id="dashboardForm">
+        <div class="grid-3" style="gap: 20px;">
+          <div class="form-group">
+            <label class="form-label">출생연도</label>
+            <input type="number" class="form-input" name="birthYear" placeholder="예: 1965" min="1940" max="2000" value="1965">
+          </div>
+          <div class="form-group">
+            <label class="form-label">월 평균소득 <span class="unit">(만원)</span></label>
+            <div class="input-group">
+              <input type="text" class="form-input" name="monthlyIncome" data-type="money" placeholder="300" value="350">
+              <span class="input-suffix">만원</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">국민연금 가입기간 <span class="unit">(년)</span></label>
+            <div class="input-group">
+              <input type="number" class="form-input" name="enrollYears" placeholder="25" min="0" max="40" value="25">
+              <span class="input-suffix">년</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">퇴직금 예상액 <span class="unit">(만원)</span></label>
+            <div class="input-group">
+              <input type="text" class="form-input" name="retirementPay" data-type="money" placeholder="20,000" value="20,000">
+              <span class="input-suffix">만원</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">월 희망 생활비 <span class="unit">(만원)</span></label>
+            <div class="input-group">
+              <input type="text" class="form-input" name="monthlyExpense" data-type="money" placeholder="250" value="250">
+              <span class="input-suffix">만원</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">보유 자산 <span class="unit">(만원)</span></label>
+            <div class="input-group">
+              <input type="text" class="form-input" name="totalAssets" data-type="money" placeholder="50,000" value="50,000">
+              <span class="input-suffix">만원</span>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top: 16px; text-align: center;">
+          <button type="button" class="btn btn-primary btn-lg" onclick="Dashboard.calculate()">
+            대시보드 계산하기
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- 요약 카드 그리드 -->
+    <div class="grid-4 fade-in" id="summary-cards" style="display: none;">
+      <div class="summary-card primary" onclick="location.href='pages/national-pension.html'">
+        <div class="icon">🏛️</div>
+        <div class="title">국민연금 예상</div>
+        <div class="desc">월 수령액</div>
+        <div class="value" id="sum-national">-</div>
+      </div>
+      <div class="summary-card secondary" onclick="location.href='pages/retirement-pension.html'">
+        <div class="icon">💼</div>
+        <div class="title">퇴직금</div>
+        <div class="desc">예상 수령액</div>
+        <div class="value" id="sum-retirement">-</div>
+      </div>
+      <div class="summary-card accent" onclick="location.href='pages/retirement-fund.html'">
+        <div class="icon">🏦</div>
+        <div class="title">노후 필요자금</div>
+        <div class="desc">부족액</div>
+        <div class="value" id="sum-gap">-</div>
+      </div>
+      <div class="summary-card info" onclick="location.href='pages/health-insurance.html'">
+        <div class="icon">🏥</div>
+        <div class="title">건강보험료</div>
+        <div class="desc">월 예상액</div>
+        <div class="value" id="sum-health">-</div>
+      </div>
+    </div>
+
+    <!-- 종합 분석 영역 -->
+    <div id="dashboard-analysis" style="display: none;">
+      <!-- 연금 통합 차트 -->
+      <div class="card fade-in">
+        <h2 class="card-title"><span class="card-icon">📊</span>연금 통합 요약</h2>
+        <div class="result-mini-grid">
+          <div class="result-mini">
+            <div class="label">월 연금 수령 합계</div>
+            <div class="value" id="dash-total-pension">-</div>
+          </div>
+          <div class="result-mini">
+            <div class="label">소득대체율</div>
+            <div class="value" id="dash-replacement-rate">-</div>
+          </div>
+          <div class="result-mini">
+            <div class="label">월 소득 갭</div>
+            <div class="value red" id="dash-income-gap">-</div>
+          </div>
+          <div class="result-mini">
+            <div class="label">자산 소진 예상</div>
+            <div class="value orange" id="dash-depletion">-</div>
+          </div>
+        </div>
+        <div class="chart-container tall">
+          <canvas id="dashPensionChart"></canvas>
+        </div>
+      </div>
+
+      <!-- 수입 vs 지출 차트 -->
+      <div class="grid-2">
+        <div class="card fade-in">
+          <h2 class="card-title"><span class="card-icon">💰</span>월 현금흐름</h2>
+          <div class="chart-container">
+            <canvas id="dashCashflowChart"></canvas>
+          </div>
+        </div>
+        <div class="card fade-in">
+          <h2 class="card-title"><span class="card-icon">📋</span>자산 소진 추이</h2>
+          <div class="chart-container">
+            <canvas id="dashAssetChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 카테고리 네비게이션 -->
+    <h2 style="font-size: var(--font-xl); margin: 32px 0 20px; color: var(--primary-dark);">상세 계산기</h2>
+    <div class="grid-4 fade-in">
+      <a href="pages/national-pension.html" class="summary-card primary" style="text-decoration: none;">
+        <div class="icon">🏛️</div>
+        <div class="title">국민연금</div>
+        <div class="desc">예상 수령액, 조기/연기 비교, 추납 효과</div>
+      </a>
+      <a href="pages/retirement-pension.html" class="summary-card secondary" style="text-decoration: none;">
+        <div class="icon">💼</div>
+        <div class="title">퇴직연금</div>
+        <div class="desc">DB/DC 비교, 일시금 vs 연금, IRP 세액공제</div>
+      </a>
+      <a href="pages/personal-pension.html" class="summary-card" style="text-decoration: none; border-top: 4px solid #6F42C1;">
+        <div class="icon">💰</div>
+        <div class="title">개인연금</div>
+        <div class="desc">연금저축 시뮬레이터, ISA 전환 비교</div>
+      </a>
+      <a href="pages/tax-strategy.html" class="summary-card accent" style="text-decoration: none;">
+        <div class="icon">📋</div>
+        <div class="title">절세 전략</div>
+        <div class="desc">연금소득세, 퇴직소득세, 종합소득세</div>
+      </a>
+      <a href="pages/health-insurance.html" class="summary-card info" style="text-decoration: none;">
+        <div class="icon">🏥</div>
+        <div class="title">건강보험료</div>
+        <div class="desc">지역보험료, 피부양자 판정, 임의계속</div>
+      </a>
+      <a href="pages/retirement-fund.html" class="summary-card danger" style="text-decoration: none;">
+        <div class="icon">🏦</div>
+        <div class="title">노후자금 설계</div>
+        <div class="desc">필요자금, 생활비 역산, 인출 전략</div>
+      </a>
+      <a href="pages/checklist.html" class="summary-card warning" style="text-decoration: none;">
+        <div class="icon">✅</div>
+        <div class="title">퇴직 준비 체크리스트</div>
+        <div class="desc">D-365부터 D+30까지 단계별 체크</div>
+      </a>
+    </div>
+  </div>
+
+  <footer id="footer"></footer>
+
+  <script src="js/constants.js"></script>
+  <script src="js/calculator-engine.js"></script>
+  <script src="js/common.js"></script>
+  <script>
+    const Dashboard = {
+      calculate() {
+        const form = document.getElementById('dashboardForm');
+        const birthYear = Number(form.birthYear.value) || 1965;
+        const monthlyIncome = Number(form.monthlyIncome.value.replace(/[^0-9]/g, '')) * 10000 || 3500000;
+        const enrollYears = Number(form.enrollYears.value) || 25;
+        const retirementPay = Number(form.retirementPay.value.replace(/[^0-9]/g, '')) * 10000 || 200000000;
+        const monthlyExpense = Number(form.monthlyExpense.value.replace(/[^0-9]/g, '')) * 10000 || 2500000;
+        const totalAssets = Number(form.totalAssets.value.replace(/[^0-9]/g, '')) * 10000 || 500000000;
+
+        // 국민연금 계산
+        const nationalPension = CalcEngine.nationalPension.calcBasicPension(
+          monthlyIncome, enrollYears * 12
+        );
+        const startAge = CalcEngine.nationalPension.getStartAge(birthYear);
+
+        // 퇴직금 (입력값 그대로)
+        const retireAmount = retirementPay;
+
+        // 노후 필요자금
+        const retireAge = startAge;
+        const endAge = CONSTANTS.RETIREMENT_FUND.DEFAULT_LIFE_EXPECTANCY;
+        const fund = CalcEngine.retirementFund.calcRequiredFund(
+          monthlyExpense, retireAge, endAge,
+          CONSTANTS.RETIREMENT_FUND.DEFAULT_INFLATION,
+          CONSTANTS.RETIREMENT_FUND.DEFAULT_RETURN_RATE
+        );
+
+        // 건강보험료 (연소득 기준으로 간이 계산)
+        const annualIncome = nationalPension * 12;
+        const healthIns = CalcEngine.healthInsurance.calcRegionalPremium(annualIncome, 0, 0, 0);
+
+        // 소득대체율
+        const replacementRate = monthlyIncome > 0 ? nationalPension / monthlyIncome : 0;
+
+        // 월 소득 갭
+        const incomeGap = monthlyExpense - nationalPension;
+
+        // 자산 소진 시점
+        const assetInfo = CalcEngine.retirementFund.calcAvailableMonthly(
+          totalAssets, nationalPension, retireAge, endAge,
+          CONSTANTS.RETIREMENT_FUND.DEFAULT_RETURN_RATE,
+          CONSTANTS.RETIREMENT_FUND.DEFAULT_INFLATION
+        );
+
+        // 자산 소진 연도 찾기
+        let depletionAge = endAge;
+        for (const item of assetInfo.assetTimeline) {
+          if (item.balance <= 0) {
+            depletionAge = item.age;
+            break;
+          }
+        }
+
+        // UI 업데이트
+        document.getElementById('summary-cards').style.display = '';
+        document.getElementById('dashboard-analysis').style.display = '';
+
+        document.getElementById('sum-national').textContent = `월 ${APP.format.manwon(nationalPension)}`;
+        document.getElementById('sum-retirement').textContent = APP.format.manwon(retireAmount);
+        document.getElementById('sum-gap').textContent = incomeGap > 0 ? `월 -${APP.format.manwon(incomeGap)}` : '충분';
+        document.getElementById('sum-health').textContent = `월 ${APP.format.won(healthIns.total)}`;
+
+        document.getElementById('dash-total-pension').textContent = `월 ${APP.format.manwon(nationalPension)}`;
+        document.getElementById('dash-replacement-rate').textContent = APP.format.percent(replacementRate);
+        document.getElementById('dash-income-gap').textContent = incomeGap > 0 ? `-${APP.format.manwon(incomeGap)}/월` : '충분';
+        document.getElementById('dash-depletion').textContent = depletionAge >= endAge ? `${endAge}세 이후` : `${depletionAge}세`;
+
+        // 차트는 display:none→visible 후 브라우저 리플로우를 기다려야 캔버스 크기가 잡힘
+        requestAnimationFrame(() => {
+          this.renderCharts(nationalPension, monthlyExpense, retireAge, endAge, assetInfo, totalAssets);
+        });
+
+        // 데이터 저장
+        APP.storage.save('dashboard', {
+          birthYear, monthlyIncome: monthlyIncome / 10000, enrollYears,
+          retirementPay: retirementPay / 10000, monthlyExpense: monthlyExpense / 10000,
+          totalAssets: totalAssets / 10000
+        });
+      },
+
+      renderCharts(pension, expense, retireAge, endAge, assetInfo, totalAssets) {
+        // 연금 vs 필요생활비 차트
+        const ages = [];
+        const pensionData = [];
+        const expenseData = [];
+        for (let age = retireAge; age <= endAge; age++) {
+          ages.push(age + '세');
+          pensionData.push(Math.round(pension * 12 / 10000));
+          const adjustedExpense = expense * 12 * Math.pow(1.025, age - retireAge);
+          expenseData.push(Math.round(adjustedExpense / 10000));
+        }
+
+        APP.chart.create('dashPensionChart', {
+          type: 'line',
+          data: {
+            labels: ages,
+            datasets: [
+              {
+                label: '연간 연금수령액 (만원)',
+                data: pensionData,
+                borderColor: APP.chart.colors.primary,
+                backgroundColor: APP.chart.colors.primaryAlpha,
+                fill: true,
+                tension: 0.3,
+              },
+              {
+                label: '연간 필요생활비 (만원)',
+                data: expenseData,
+                borderColor: APP.chart.colors.danger,
+                backgroundColor: APP.chart.colors.dangerAlpha,
+                fill: true,
+                tension: 0.3,
+                borderDash: [5, 5],
+              }
+            ]
+          },
+          options: {
+            plugins: {
+              title: { display: true, text: '연금수령액 vs 필요생활비 (연간)', font: { size: 16 } }
+            },
+            scales: {
+              y: { title: { display: true, text: '만원' } }
+            }
+          }
+        });
+
+        // 월 현금흐름 (도넛) - 연금 vs 생활비 관계에 따라 표시 변경
+        const isDeficit = expense > pension;
+        const cashflowLabels = isDeficit
+          ? ['국민연금', '부족분 (자산에서 충당)']
+          : ['생활비 충당', '여유분'];
+        const cashflowData = isDeficit
+          ? [pension, expense - pension]
+          : [expense, pension - expense];
+        const cashflowBgColors = isDeficit
+          ? [APP.chart.colors.primary, APP.chart.colors.dangerAlpha]
+          : [APP.chart.colors.primary, APP.chart.colors.secondaryAlpha];
+        const cashflowBorderColors = isDeficit
+          ? [APP.chart.colors.primary, APP.chart.colors.danger]
+          : [APP.chart.colors.primary, APP.chart.colors.secondary];
+
+        APP.chart.create('dashCashflowChart', {
+          type: 'doughnut',
+          data: {
+            labels: cashflowLabels,
+            datasets: [{
+              data: cashflowData,
+              backgroundColor: cashflowBgColors,
+              borderColor: cashflowBorderColors,
+              borderWidth: 2,
+            }]
+          },
+          options: {
+            plugins: {
+              title: { display: true, text: `월 생활비 ${APP.format.manwon(expense)} 충당 구조`, font: { size: 14 } }
+            }
+          }
+        });
+
+        // 자산 소진 추이
+        const assetAges = assetInfo.assetTimeline.map(d => d.age + '세');
+        const assetBalances = assetInfo.assetTimeline.map(d => Math.round(d.balance / 10000));
+
+        APP.chart.create('dashAssetChart', {
+          type: 'line',
+          data: {
+            labels: assetAges,
+            datasets: [{
+              label: '보유자산 잔액 (만원)',
+              data: assetBalances,
+              borderColor: APP.chart.colors.accent,
+              backgroundColor: APP.chart.colors.accentAlpha,
+              fill: true,
+              tension: 0.3,
+            }]
+          },
+          options: {
+            plugins: {
+              title: { display: true, text: '보유자산 소진 추이', font: { size: 14 } }
+            },
+            scales: {
+              y: {
+                title: { display: true, text: '만원' },
+                beginAtZero: true,
+              }
+            }
+          }
+        });
+      },
+
+      // 저장된 데이터 복원
+      restore() {
+        const data = APP.storage.load('dashboard');
+        if (!data) return;
+
+        const form = document.getElementById('dashboardForm');
+        if (data.birthYear) form.birthYear.value = data.birthYear;
+        if (data.monthlyIncome) form.monthlyIncome.value = Number(data.monthlyIncome).toLocaleString('ko-KR');
+        if (data.enrollYears) form.enrollYears.value = data.enrollYears;
+        if (data.retirementPay) form.retirementPay.value = Number(data.retirementPay).toLocaleString('ko-KR');
+        if (data.monthlyExpense) form.monthlyExpense.value = Number(data.monthlyExpense).toLocaleString('ko-KR');
+        if (data.totalAssets) form.totalAssets.value = Number(data.totalAssets).toLocaleString('ko-KR');
+
+        this.calculate();
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      Dashboard.restore();
+    });
+  </script>
+</body>
+</html>

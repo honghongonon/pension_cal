@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>국민연금 계산기 - 연금 포털</title>
+  <link rel="stylesheet" href="../css/common.css">
+  <link rel="stylesheet" href="../css/calculator.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <nav id="main-nav"></nav>
+
+  <div class="container">
+    <div class="page-header fade-in">
+      <h1 class="page-title">국민연금 계산기</h1>
+      <p class="page-subtitle">예상 수령액, 조기/연기 수령 비교, 추납 효과를 한눈에 확인하세요</p>
+    </div>
+
+    <div class="info-box info fade-in">
+      <span class="icon">💡</span>
+      <div>
+        <strong>국민연금 기본 산식</strong><br>
+        기본연금액 = 소득대체율(43%) × (A값 + B값) × 가입기간 계수<br>
+        A값: 전체 가입자 평균소득(약 309만원), B값: 본인 평균소득
+      </div>
+    </div>
+
+    <div class="calc-layout fade-in">
+      <!-- 좌측: 입력 -->
+      <div class="calc-input-panel">
+        <div class="card">
+          <h2 class="card-title"><span class="card-icon">📝</span>기본 정보 입력</h2>
+          <form id="npForm">
+            <div class="input-section">
+              <div class="form-group">
+                <label class="form-label">출생연도</label>
+                <input type="number" class="form-input" name="birthYear" placeholder="예: 1965" min="1940" max="2000" value="1965">
+              </div>
+              <div class="form-group">
+                <label class="form-label">월 평균 기준소득월액 <span class="unit">(만원)</span>
+                  <span class="tooltip-trigger" data-tooltip="국민연금 가입기간 동안의 평균 기준소득월액입니다. 연금공단 예상연금 조회에서 확인 가능합니다.">?</span>
+                </label>
+                <div class="input-group">
+                  <input type="text" class="form-input" name="avgIncome" data-type="money" placeholder="300" value="350">
+                  <span class="input-suffix">만원</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">총 가입기간 <span class="unit">(년)</span></label>
+                <div class="input-group">
+                  <input type="number" class="form-input" name="enrollYears" min="0" max="40" value="25">
+                  <span class="input-suffix">년</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="input-section">
+              <div class="input-section-title">조기/연기 수령 설정</div>
+              <div class="form-group">
+                <label class="form-label">조기수령 연수 <span class="unit">(최대 5년)</span></label>
+                <div class="form-range-container">
+                  <input type="range" class="form-range" name="earlyYears" min="0" max="5" value="0" oninput="document.getElementById('earlyVal').textContent=this.value+'년'">
+                  <span class="range-value" id="earlyVal">0년</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">연기수령 연수 <span class="unit">(최대 5년)</span></label>
+                <div class="form-range-container">
+                  <input type="range" class="form-range" name="deferYears" min="0" max="5" value="0" oninput="document.getElementById('deferVal').textContent=this.value+'년'">
+                  <span class="range-value" id="deferVal">0년</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="input-section">
+              <div class="input-section-title">추납 분석 (선택)</div>
+              <div class="form-group">
+                <label class="form-label">추납 기간 <span class="unit">(개월)</span></label>
+                <div class="input-group">
+                  <input type="number" class="form-input" name="additionalMonths" min="0" max="120" value="0">
+                  <span class="input-suffix">개월</span>
+                </div>
+              </div>
+            </div>
+
+            <button type="button" class="btn btn-primary btn-block btn-lg" onclick="NationalPension.calculate()">
+              계산하기
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- 우측: 결과 -->
+      <div class="calc-result-panel">
+        <div id="np-empty" class="card">
+          <div class="empty-result">
+            <div class="icon">🏛️</div>
+            <div class="text">좌측 정보를 입력하고 계산하기를 눌러주세요</div>
+            <div class="sub-text">예상 국민연금 수령액을 계산합니다</div>
+          </div>
+        </div>
+
+        <div id="np-result" style="display:none;">
+          <!-- 기본 결과 배너 -->
+          <div class="result-banner fade-in">
+            <div class="label">예상 월 수령액 (정상 수령)</div>
+            <div class="amount" id="np-monthly">-</div>
+            <div class="sub" id="np-start-info">-</div>
+          </div>
+
+          <!-- 미니 카드 요약 -->
+          <div class="result-mini-grid fade-in">
+            <div class="result-mini">
+              <div class="label">수령 개시 연령</div>
+              <div class="value" id="np-start-age">-</div>
+            </div>
+            <div class="result-mini">
+              <div class="label">조기수령 시</div>
+              <div class="value orange" id="np-early">-</div>
+            </div>
+            <div class="result-mini">
+              <div class="label">연기수령 시</div>
+              <div class="value green" id="np-deferred">-</div>
+            </div>
+            <div class="result-mini">
+              <div class="label">소득대체율</div>
+              <div class="value" id="np-replacement">-</div>
+            </div>
+          </div>
+
+          <!-- 시나리오 비교 -->
+          <div class="card fade-in">
+            <h2 class="card-title"><span class="card-icon">📊</span>조기/정상/연기 누적 수령액 비교</h2>
+            <div class="scenario-cards" id="np-scenarios">
+              <div class="scenario-card" id="sc-early">
+                <div class="scenario-label" style="color:var(--accent);">조기수령</div>
+                <div class="scenario-value" id="sc-early-val">-</div>
+                <div class="scenario-desc" id="sc-early-desc">-</div>
+              </div>
+              <div class="scenario-card" id="sc-normal">
+                <div class="scenario-label" style="color:var(--primary);">정상수령</div>
+                <div class="scenario-value" id="sc-normal-val">-</div>
+                <div class="scenario-desc" id="sc-normal-desc">-</div>
+              </div>
+              <div class="scenario-card" id="sc-deferred">
+                <div class="scenario-label" style="color:var(--secondary);">연기수령</div>
+                <div class="scenario-value" id="sc-deferred-val">-</div>
+                <div class="scenario-desc" id="sc-deferred-desc">-</div>
+              </div>
+            </div>
+            <div class="chart-container tall">
+              <canvas id="npCompareChart"></canvas>
+            </div>
+            <div class="info-box warning" id="np-breakeven-info" style="display:none;">
+              <span class="icon">⚖️</span>
+              <div id="np-breakeven-text"></div>
+            </div>
+          </div>
+
+          <!-- 추납 분석 -->
+          <div class="card fade-in" id="np-addpay-card" style="display:none;">
+            <h2 class="card-title"><span class="card-icon">💰</span>추납 효과 분석</h2>
+            <div class="result-mini-grid">
+              <div class="result-mini">
+                <div class="label">추납 비용</div>
+                <div class="value red" id="np-addpay-cost">-</div>
+              </div>
+              <div class="result-mini">
+                <div class="label">월 연금 증가액</div>
+                <div class="value green" id="np-addpay-increase">-</div>
+              </div>
+              <div class="result-mini">
+                <div class="label">추납 후 연금</div>
+                <div class="value" id="np-addpay-new">-</div>
+              </div>
+              <div class="result-mini">
+                <div class="label">손익분기</div>
+                <div class="value orange" id="np-addpay-breakeven">-</div>
+              </div>
+            </div>
+            <div class="info-box success">
+              <span class="icon">✅</span>
+              <div id="np-addpay-summary"></div>
+            </div>
+          </div>
+
+          <!-- 계산 과정 -->
+          <div class="card fade-in">
+            <h2 class="card-title"><span class="card-icon">🔍</span>계산 과정</h2>
+            <div class="calc-process" id="np-process"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer id="footer"></footer>
+
+  <script src="../js/constants.js"></script>
+  <script src="../js/calculator-engine.js"></script>
+  <script src="../js/common.js"></script>
+  <script>
+    const NationalPension = {
+      calculate() {
+        const form = document.getElementById('npForm');
+        const birthYear = Number(form.birthYear.value) || 1965;
+        const avgIncome = Number(form.avgIncome.value.replace(/[^0-9]/g, '')) * 10000;
+        const enrollYears = Number(form.enrollYears.value) || 0;
+        const earlyYears = Number(form.earlyYears.value) || 0;
+        const deferYears = Number(form.deferYears.value) || 0;
+        const additionalMonths = Number(form.additionalMonths.value) || 0;
+
+        if (enrollYears < 10) {
+          alert('국민연금 수급 자격은 최소 10년 이상 가입이 필요합니다.');
+          return;
+        }
+
+        const startAge = CalcEngine.nationalPension.getStartAge(birthYear);
+        const basicPension = CalcEngine.nationalPension.calcBasicPension(avgIncome, enrollYears * 12);
+        const earlyPension = CalcEngine.nationalPension.calcEarlyPension(basicPension, earlyYears);
+        const deferredPension = CalcEngine.nationalPension.calcDeferredPension(basicPension, deferYears);
+        const replacementRate = avgIncome > 0 ? basicPension / avgIncome : 0;
+
+        // UI 표시
+        document.getElementById('np-empty').style.display = 'none';
+        document.getElementById('np-result').style.display = '';
+
+        document.getElementById('np-monthly').textContent = APP.format.manwon(basicPension);
+        document.getElementById('np-start-info').textContent = `${birthYear}년생 기준, ${startAge}세부터 수령 시작`;
+        document.getElementById('np-start-age').textContent = startAge + '세';
+        document.getElementById('np-early').textContent = earlyYears > 0 ? APP.format.manwon(earlyPension) : '-';
+        document.getElementById('np-deferred').textContent = deferYears > 0 ? APP.format.manwon(deferredPension) : '-';
+        document.getElementById('np-replacement').textContent = APP.format.percent(replacementRate);
+
+        // 시나리오 비교
+        const endAge = 90;
+        const scenarios = CalcEngine.nationalPension.compareScenarios(basicPension, startAge, earlyYears || 3, deferYears || 3, endAge);
+
+        // 시나리오 카드
+        const earlyTotal = scenarios.early[scenarios.early.length - 1];
+        const normalTotal = scenarios.normal[scenarios.normal.length - 1];
+        const deferredTotal = scenarios.deferred[scenarios.deferred.length - 1];
+
+        const maxTotal = Math.max(earlyTotal, normalTotal, deferredTotal);
+        document.getElementById('sc-early').className = 'scenario-card' + (earlyTotal === maxTotal ? ' best' : '');
+        document.getElementById('sc-normal').className = 'scenario-card' + (normalTotal === maxTotal ? ' best' : '');
+        document.getElementById('sc-deferred').className = 'scenario-card' + (deferredTotal === maxTotal ? ' best' : '');
+
+        const eY = earlyYears || 3;
+        const dY = deferYears || 3;
+        document.getElementById('sc-early-val').textContent = APP.format.manwon(earlyTotal);
+        document.getElementById('sc-early-desc').textContent = `${startAge - eY}세~${endAge}세, 월 ${APP.format.manwon(CalcEngine.nationalPension.calcEarlyPension(basicPension, eY))}`;
+        document.getElementById('sc-normal-val').textContent = APP.format.manwon(normalTotal);
+        document.getElementById('sc-normal-desc').textContent = `${startAge}세~${endAge}세, 월 ${APP.format.manwon(basicPension)}`;
+        document.getElementById('sc-deferred-val').textContent = APP.format.manwon(deferredTotal);
+        document.getElementById('sc-deferred-desc').textContent = `${startAge + dY}세~${endAge}세, 월 ${APP.format.manwon(CalcEngine.nationalPension.calcDeferredPension(basicPension, dY))}`;
+
+        // 손익분기점 찾기
+        let breakevenAge = null;
+        for (let i = 0; i < scenarios.ages.length; i++) {
+          if (scenarios.deferred[i] > scenarios.normal[i] && !breakevenAge) {
+            breakevenAge = scenarios.ages[i];
+          }
+        }
+        const beInfo = document.getElementById('np-breakeven-info');
+        if (breakevenAge) {
+          beInfo.style.display = '';
+          document.getElementById('np-breakeven-text').innerHTML =
+            `<strong>손익분기점 분석:</strong> 연기수령이 정상수령 누적액을 추월하는 시점은 <strong>${breakevenAge}세</strong>입니다. ` +
+            `${breakevenAge}세 이상 생존 시 연기수령이 유리합니다.`;
+        } else {
+          beInfo.style.display = 'none';
+        }
+
+        // 차트
+        APP.chart.create('npCompareChart', {
+          type: 'line',
+          data: {
+            labels: scenarios.ages.map(a => a + '세'),
+            datasets: [
+              {
+                label: `조기수령 (${startAge - eY}세~)`,
+                data: scenarios.early.map(v => Math.round(v / 10000)),
+                borderColor: APP.chart.colors.accent,
+                backgroundColor: APP.chart.colors.accentAlpha,
+                fill: false, tension: 0.3,
+              },
+              {
+                label: `정상수령 (${startAge}세~)`,
+                data: scenarios.normal.map(v => Math.round(v / 10000)),
+                borderColor: APP.chart.colors.primary,
+                backgroundColor: APP.chart.colors.primaryAlpha,
+                fill: false, tension: 0.3, borderWidth: 3,
+              },
+              {
+                label: `연기수령 (${startAge + dY}세~)`,
+                data: scenarios.deferred.map(v => Math.round(v / 10000)),
+                borderColor: APP.chart.colors.secondary,
+                backgroundColor: APP.chart.colors.secondaryAlpha,
+                fill: false, tension: 0.3,
+              },
+            ]
+          },
+          options: {
+            plugins: {
+              title: { display: true, text: '누적 수령액 비교 (만원)', font: { size: 16 } }
+            },
+            scales: { y: { title: { display: true, text: '만원' } } }
+          }
+        });
+
+        // 추납 분석
+        if (additionalMonths > 0) {
+          const addPay = CalcEngine.nationalPension.calcAdditionalPayment(basicPension, additionalMonths, avgIncome);
+          document.getElementById('np-addpay-card').style.display = '';
+          document.getElementById('np-addpay-cost').textContent = APP.format.manwon(addPay.cost);
+          document.getElementById('np-addpay-increase').textContent = '+' + APP.format.manwon(addPay.increase);
+          document.getElementById('np-addpay-new').textContent = APP.format.manwon(addPay.newPension);
+          const beMonths = addPay.breakEvenMonths;
+          document.getElementById('np-addpay-breakeven').textContent = beMonths < Infinity
+            ? Math.ceil(beMonths / 12) + '년 ' + (beMonths % 12) + '개월'
+            : '해당없음';
+          document.getElementById('np-addpay-summary').innerHTML =
+            `추납 비용 <strong>${APP.format.manwon(addPay.cost)}</strong>을 납부하면 월 연금이 ` +
+            `<strong>${APP.format.manwon(addPay.increase)}</strong> 증가합니다. ` +
+            `약 <strong>${Math.ceil(beMonths / 12)}년</strong> 수령 시 손익분기점에 도달합니다.`;
+        } else {
+          document.getElementById('np-addpay-card').style.display = 'none';
+        }
+
+        // 계산 과정
+        const A = CONSTANTS.NATIONAL_PENSION.A_VALUE;
+        const B = Math.min(avgIncome, CONSTANTS.NATIONAL_PENSION.INCOME_UPPER);
+        const rate = CONSTANTS.NATIONAL_PENSION.REPLACEMENT_RATE_2025;
+        let factor = enrollYears <= 20 ? enrollYears / 20 : 1 + 0.05 * (enrollYears - 20);
+
+        document.getElementById('np-process').innerHTML = `
+          <div class="calc-process-title">국민연금 기본연금액 산출 과정</div>
+          <div class="calc-process-step">
+            <span class="step-num">1</span>
+            <span>A값 (전체 가입자 평균소득월액)</span>
+            <span class="step-formula">${APP.format.won(A)}</span>
+          </div>
+          <div class="calc-process-step">
+            <span class="step-num">2</span>
+            <span>B값 (본인 평균 기준소득월액)</span>
+            <span class="step-formula">${APP.format.won(B)}</span>
+          </div>
+          <div class="calc-process-step">
+            <span class="step-num">3</span>
+            <span>소득대체율</span>
+            <span class="step-formula">${(rate * 100).toFixed(1)}%</span>
+          </div>
+          <div class="calc-process-step">
+            <span class="step-num">4</span>
+            <span>가입기간 계수 (${enrollYears}년)</span>
+            <span class="step-formula">${factor.toFixed(4)}</span>
+          </div>
+          <div class="calc-process-step">
+            <span class="step-num">5</span>
+            <span>기본연금액 = ${(rate * 100).toFixed(1)}% × (${APP.format.won(A)} + ${APP.format.won(B)}) × ${factor.toFixed(2)}</span>
+            <span class="step-formula">${APP.format.won(basicPension)}/월</span>
+          </div>
+          ${earlyYears > 0 ? `
+          <div class="calc-process-step">
+            <span class="step-num">6</span>
+            <span>조기수령 감액 (연 6% × ${earlyYears}년 = ${earlyYears * 6}% 감액)</span>
+            <span class="step-formula">${APP.format.won(earlyPension)}/월</span>
+          </div>` : ''}
+          ${deferYears > 0 ? `
+          <div class="calc-process-step">
+            <span class="step-num">${earlyYears > 0 ? 7 : 6}</span>
+            <span>연기수령 증액 (연 7.2% × ${deferYears}년 = ${(deferYears * 7.2).toFixed(1)}% 증액)</span>
+            <span class="step-formula">${APP.format.won(deferredPension)}/월</span>
+          </div>` : ''}
+        `;
+
+        // 저장
+        APP.storage.saveForm('npForm');
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      APP.storage.restoreForm('npForm');
+    });
+  </script>
+</body>
+</html>

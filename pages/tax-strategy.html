@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>절세 전략 - 연금 포털</title>
+  <link rel="stylesheet" href="../css/common.css">
+  <link rel="stylesheet" href="../css/calculator.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <nav id="main-nav"></nav>
+
+  <div class="container">
+    <div class="page-header fade-in">
+      <h1 class="page-title">절세 전략 시뮬레이터</h1>
+      <p class="page-subtitle">종합소득세, 연금소득세, 퇴직소득세를 계산하고 최적 절세 전략을 찾으세요</p>
+    </div>
+
+    <div class="info-box info fade-in">
+      <span class="icon">💡</span>
+      <div>
+        <strong>핵심 절세 포인트</strong><br>
+        • 사적연금 연 1,500만원 이하 → 저율 분리과세(3.3~5.5%)<br>
+        • 퇴직금은 IRP 이전 후 연금수령 시 세금 30~40% 감면<br>
+        • 연금저축+IRP 세액공제 최대 900만원 → 환급 최대 148.5만원
+      </div>
+    </div>
+
+    <!-- 탭 -->
+    <div class="tabs fade-in">
+      <button class="tab-btn active" onclick="TaxStrategy.switchTab('income', this)">종합소득세</button>
+      <button class="tab-btn" onclick="TaxStrategy.switchTab('pension', this)">연금소득 절세</button>
+      <button class="tab-btn" onclick="TaxStrategy.switchTab('retire', this)">퇴직소득세</button>
+    </div>
+
+    <!-- ==============================
+         탭1: 종합소득세 계산기
+         ============================== -->
+    <div class="tab-content active" id="tab-income">
+      <div class="calc-layout">
+        <div class="calc-input-panel">
+          <div class="card">
+            <h2 class="card-title"><span class="card-icon">📝</span>소득 정보 입력</h2>
+            <form id="taxIncomeForm">
+              <div class="input-section">
+                <div class="input-section-title">소득 항목 (연간)</div>
+                <div class="form-group">
+                  <label class="form-label">근로소득 <span class="unit">(만원)</span></label>
+                  <div class="input-group">
+                    <input type="text" class="form-input" name="salary" data-type="money" value="0">
+                    <span class="input-suffix">만원</span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">사업소득 <span class="unit">(만원)</span></label>
+                  <div class="input-group">
+                    <input type="text" class="form-input" name="business" data-type="money" value="0">
+                    <span class="input-suffix">만원</span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">공적연금소득 <span class="unit">(만원/년)</span>
+                    <span class="tooltip-trigger" data-tooltip="국민연금 등 공적연금. 2002년 이후 납입분에 대해 과세됩니다.">?</span>
+                  </label>
+                  <div class="input-group">
+                    <input type="text" class="form-input" name="publicPension" data-type="money" value="0">
+                    <span class="input-suffix">만원</span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">이자·배당소득 <span class="unit">(만원)</span>
+                    <span class="tooltip-trigger" data-tooltip="2,000만원 초과 시 종합과세 대상. 이하는 15.4% 원천징수로 분리과세.">?</span>
+                  </label>
+                  <div class="input-group">
+                    <input type="text" class="form-input" name="financial" data-type="money" value="0">
+                    <span class="input-suffix">만원</span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">임대소득 <span class="unit">(만원)</span></label>
+                  <div class="input-group">
+                    <input type="text" class="form-input" name="rental" data-type="money" value="0">
+                    <span class="input-suffix">만원</span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">기타소득 <span class="unit">(만원)</span></label>
+                  <div class="input-group">
+                    <input type="text" class="form-input" name="other" data-type="money" value="0">
+                    <span class="input-suffix">만원</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="input-section">
+                <div class="input-section-title">공제 항목</div>
+                <div class="form-group">
+                  <label class="form-label">인적공제 인원 <span class="unit">(본인 포함)</span></label>
+                  <div class="input-group">
+                    <input type="number" class="form-input" name="dependents" value="1" min="1" max="10">
+                    <span class="input-suffix">명</span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">국민연금 납부액 <span class="unit">(만원/년)</span></label>
+                  <div class="input-group">
+                    <input type="text" class="form-input" name="npPaid" data-type="money" value="0">
+                    <span class="input-suffix">만원</span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">연금저축+IRP 세액공제 대상 <span class="unit">(만원)</span></label>
+                  <div class="input-group">
+                    <input type="text" class="form-input" name="pensionCredit" data-type="money" value="0">
+                    <span class="input-suffix">만원</span>
+                  </div>
+                </div>
+              </div>
+
+              <button type="button" class="btn btn-primary btn-block btn-lg" onclick="TaxStrategy.calcIncomeTax()">계산하기</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="calc-result-panel">
+          <div id="it-empty" class="card">
+            <div class="empty-result">
+              <div class="icon">📋</div>
+              <div class="text">소득 정보를 입력하고 계산하기를 눌러주세요</div>
+              <div class="sub-text">종합소득세와 실효세율을 계산합니다</div>
+            </div>
+          </div>
+
+          <div id="it-result" style="display:none;">
+            <div class="result-banner fade-in">
+              <div class="label">종합소득세 + 지방소득세</div>
+              <div class="amount" id="it-total-tax">-</div>
+              <div class="sub" id="it-effective">-</div>
+            </div>
+
+            <div class="result-mini-grid fade-in">
+              <div class="result-mini">
+                <div class="label">총 소득</div>
+                <div class="value" id="it-gross">-</div>
+              </div>
+              <div class="result-mini">
+                <div class="label">과세표준</div>
+                <div class="value" id="it-taxable">-</div>
+              </div>
+              <div class="result-mini">
+                <div class="label">적용 세율</div>
+                <div class="value" id="it-rate">-</div>
+              </div>
+              <div class="result-mini">
+                <div class="label">세액공제 합계</div>
+                <div class="value green" id="it-credits">-</div>
+              </div>
+            </div>
+
+            <!-- 계산 과정 -->
+            <div class="card fade-in">
+              <h2 class="card-title"><span class="card-icon">🔍</span>계산 과정</h2>
+              <div class="calc-process" id="it-process"></div>
+            </div>
+
+            <!-- 세율 구간 차트 -->
+            <div class="card fade-in">
+              <h2 class="card-title"><span class="card-icon">📊</span>소득세 누진세율 구간</h2>
+              <div class="chart-container tall">
+                <canvas id="itBracketChart"></canvas>
+              </div>
+            </div>
+
+            <!-- 세율표 -->
+            <div class="card fade-in">
+              <h2 class="card-title"><span class="card-icon">📋</span>종합소득세 누진세율표</h2>
+              <div class="table-responsive">
+                <table class="data-table" id="it-bracket-table">
+                  <thead>
+                    <tr><th>과세표준 구간</th><th>세율</th><th>누진공제</th><th>비고</th></tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==============================
+         탭2: 연금소득 절세
+         ============================== -->
+    <div class="tab-content" id="tab-pension">
+      <div class="calc-layout">
+        <div class="calc-input-panel">
+          <div class="card">
+            <h2 class="card-title"><span class="card-icon">📝</span>연금소득 정보</h2>
+            <form id="taxPensionForm">
+              <div class="input-section">
+                <div class="input-section-title">연금 수령 정보</div>
+                <div class="form-group">
+                  <label class="form-label">나이</label>
+                  <div class="input-group">
+                    <input type="number" class="form-input" name="age" value="65" min="55" max="100">
+                    <span class="input-suffix">세</span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">사적연금 수령액 <span class="unit">(만원/년)</span>
+                    <span class="tooltip-trigger" data-tooltip="연금저축, IRP에서 수령하는 연금. 1,500만원이 분리과세 기준선입니다.">?</span>
+                  </label>
+                  <div class="input-group">
+                    <input type="text" class="form-input" name="privatePension" data-type="money" value="1,200">
+                    <span class="input-suffix">만원</span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">공적연금 수령액 <span class="unit">(만원/년)</span></label>
+                  <div class="input-group">
+                    <input type="text" class="form-input" name="publicPension" data-type="money" value="1,200">
+                    <span class="input-suffix">만원</span>
+                  </div>
+                </div>
+              </div>
+              <div class="input-section">
+                <div class="input-section-title">기타 소득</div>
+                <div class="form-group">
+                  <label class="form-label">이자·배당소득 <span class="unit">(만원/년)</span></label>
+                  <div class="input-group">
+                    <input type="text" class="form-input" name="finIncome" data-type="money" value="0">
+                    <span class="input-suffix">만원</span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">임대·기타소득 <span class="unit">(만원/년)</span></label>
+                  <div class="input-group">
+                    <input type="text" class="form-input" name="etcIncome" data-type="money" value="0">
+                    <span class="input-suffix">만원</span>
+                  </div>
+                </div>
+              </div>
+              <button type="button" class="btn btn-primary btn-block btn-lg" onclick="TaxStrategy.calcPensionTax()">분석하기</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="calc-result-panel">
+          <div id="pt-empty" class="card">
+            <div class="empty-result">
+              <div class="icon">💰</div>
+              <div class="text">연금 정보를 입력하고 분석하기를 눌러주세요</div>
+              <div class="sub-text">분리과세 vs 종합과세 최적 전략을 분석합니다</div>
+            </div>
+          </div>
+
+          <div id="pt-result" style="display:none;">
+            <!-- 분리과세 vs 종합과세 비교 -->
+            <div class="compare-grid fade-in">
+              <div class="compare-card" id="pt-sep-card">
+                <span class="badge blue">분리과세</span>
+                <div class="result-row">
+                  <span class="label">적용 세율</span>
+                  <span class="value" id="pt-sep-rate">-</span>
+                </div>
+                <div class="result-row">
+                  <span class="label">사적연금 세금</span>
+                  <span class="value negative" id="pt-sep-tax">-</span>
+                </div>
+                <div class="result-row">
+                  <span class="label">기타소득 세금</span>
+                  <span class="value negative" id="pt-sep-other-tax">-</span>
+                </div>
+                <div class="result-row">
+                  <span class="label">총 세금</span>
+                  <span class="value highlight" id="pt-sep-total">-</span>
+                </div>
+              </div>
+
+              <div class="compare-vs">VS</div>
+
+              <div class="compare-card" id="pt-comp-card">
+                <span class="badge orange">종합과세</span>
+                <div class="result-row">
+                  <span class="label">합산 소득</span>
+                  <span class="value" id="pt-comp-income">-</span>
+                </div>
+                <div class="result-row">
+                  <span class="label">연금소득공제</span>
+                  <span class="value positive" id="pt-comp-deduction">-</span>
+                </div>
+                <div class="result-row">
+                  <span class="label">종합소득세</span>
+                  <span class="value negative" id="pt-comp-tax">-</span>
+                </div>
+                <div class="result-row">
+                  <span class="label">총 세금</span>
+                  <span class="value highlight" id="pt-comp-total">-</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="info-box success fade-in">
+              <span class="icon">✅</span>
+              <div id="pt-recommend-text"></div>
+            </div>
+
+            <!-- 최적 수령액 분석 -->
+            <div class="card fade-in">
+              <h2 class="card-title"><span class="card-icon">📊</span>사적연금 수령액별 세금 변화</h2>
+              <div class="chart-container tall">
+                <canvas id="ptOptimalChart"></canvas>
+              </div>
+              <div class="info-box warning" style="margin-top:12px;">
+                <span class="icon">⚠️</span>
+                <div>
+                  <strong>사적연금 1,500만원 기준선:</strong>
+                  1,500만원 이하는 저율 분리과세(3.3~5.5%)가 적용됩니다.
+                  초과 시 전액에 대해 15% 분리과세 또는 종합과세 중 선택해야 합니다.
+                </div>
+              </div>
+            </div>
+
+            <!-- 연금소득세율 참고 -->
+            <div class="card fade-in">
+              <h2 class="card-title"><span class="card-icon">📋</span>연금소득세율 (나이별)</h2>
+              <div class="table-responsive">
+                <table class="data-table">
+                  <thead>
+                    <tr><th>나이</th><th>연금소득세율</th><th>비고</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>55~69세</td><td>5.5% (지방세 포함)</td><td>가장 높은 구간</td></tr>
+                    <tr><td>70~79세</td><td>4.4% (지방세 포함)</td><td>중간 구간</td></tr>
+                    <tr><td>80세 이상</td><td>3.3% (지방세 포함)</td><td>가장 낮은 구간</td></tr>
+                    <tr class="total-row"><td>1,500만원 초과</td><td>15% (분리과세 선택 시)</td><td>또는 종합과세</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==============================
+         탭3: 퇴직소득세
+         ============================== -->
+    <div class="tab-content" id="tab-retire">
+      <div class="calc-layout">
+        <div class="calc-input-panel">
+          <div class="card">
+            <h2 class="card-title"><span class="card-icon">📝</span>퇴직소득 정보</h2>
+            <form id="taxRetireForm">
+              <div class="form-group">
+                <label class="form-label">퇴직금 (세전) <span class="unit">(만원)</span></label>
+                <div class="input-group">
+                  <input type="text" class="form-input" name="retireIncome" data-type="money" value="10,000">
+                  <span class="input-suffix">만원</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">근속연수</label>
+                <div class="input-group">
+                  <input type="number" class="form-input" name="serviceYears" value="20" min="1" max="45">
+                  <span class="input-suffix">년</span>
+                </div>
+              </div>
+              <button type="button" class="btn btn-primary btn-block btn-lg" onclick="TaxStrategy.calcRetireTax()">계산하기</button>
+            </form>
+
+            <!-- 근속연수별 비교 도구 -->
+            <div style="margin-top:20px; padding-top:20px; border-top:1px dashed var(--border);">
+              <div class="input-section-title">근속연수별 세금 비교</div>
+              <p style="color:var(--text-light); font-size:var(--font-sm); margin-bottom:12px;">동일 퇴직금에 대해 근속연수가 세금에 미치는 영향을 비교합니다</p>
+              <button type="button" class="btn btn-outline btn-block" onclick="TaxStrategy.calcRetireCompare()">비교 차트 보기</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="calc-result-panel">
+          <div id="rt-empty" class="card">
+            <div class="empty-result">
+              <div class="icon">📋</div>
+              <div class="text">퇴직금 정보를 입력하고 계산하기를 눌러주세요</div>
+            </div>
+          </div>
+
+          <div id="rt-result" style="display:none;">
+            <div class="result-banner fade-in">
+              <div class="label">퇴직소득세 + 지방소득세</div>
+              <div class="amount" id="rt-total-tax">-</div>
+              <div class="sub" id="rt-effective">-</div>
+            </div>
+
+            <div class="result-mini-grid fade-in">
+              <div class="result-mini">
+                <div class="label">퇴직금 (세전)</div>
+                <div class="value" id="rt-gross">-</div>
+              </div>
+              <div class="result-mini">
+                <div class="label">세후 수령액</div>
+                <div class="value green" id="rt-net">-</div>
+              </div>
+              <div class="result-mini">
+                <div class="label">퇴직소득세</div>
+                <div class="value red" id="rt-income-tax">-</div>
+              </div>
+              <div class="result-mini">
+                <div class="label">지방소득세</div>
+                <div class="value red" id="rt-local-tax">-</div>
+              </div>
+            </div>
+
+            <!-- 연분연승법 과정 -->
+            <div class="card fade-in">
+              <h2 class="card-title"><span class="card-icon">🔍</span>연분연승법 계산 과정</h2>
+              <div class="calc-process" id="rt-process"></div>
+            </div>
+
+            <!-- 세금 구성 차트 -->
+            <div class="card fade-in">
+              <h2 class="card-title"><span class="card-icon">📊</span>퇴직금 구성</h2>
+              <div class="chart-container">
+                <canvas id="rtPieChart"></canvas>
+              </div>
+            </div>
+
+            <!-- 연금수령 전환 안내 -->
+            <div class="card fade-in">
+              <h2 class="card-title"><span class="card-icon">💡</span>연금수령 전환 시 절세 효과</h2>
+              <div class="result-mini-grid">
+                <div class="result-mini">
+                  <div class="label">일시금 세금</div>
+                  <div class="value red" id="rt-lump-tax">-</div>
+                </div>
+                <div class="result-mini">
+                  <div class="label">연금전환 시 세금 (10년)</div>
+                  <div class="value green" id="rt-pension-tax">-</div>
+                </div>
+                <div class="result-mini">
+                  <div class="label">절세 효과</div>
+                  <div class="value green" id="rt-saving">-</div>
+                </div>
+              </div>
+              <div class="info-box info" style="margin-top:12px;">
+                <span class="icon">📌</span>
+                <div>퇴직금을 IRP로 이전하여 연금으로 수령하면 퇴직소득세의 <strong>30~40%가 감면</strong>됩니다. 자세한 비교는 <a href="retirement-pension.html" style="color:var(--primary); font-weight:700;">퇴직연금 계산기</a>에서 확인하세요.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 근속연수 비교 차트 (별도) -->
+          <div id="rt-compare" style="display:none;">
+            <div class="card fade-in">
+              <h2 class="card-title"><span class="card-icon">📊</span>근속연수별 퇴직소득세 비교</h2>
+              <div class="chart-container tall">
+                <canvas id="rtCompareChart"></canvas>
+              </div>
+              <div class="info-box info" style="margin-top:12px;">
+                <span class="icon">💡</span>
+                <div id="rt-compare-text"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer id="footer"></footer>
+
+  <script src="../js/constants.js"></script>
+  <script src="../js/calculator-engine.js"></script>
+  <script src="../js/common.js"></script>
+  <script>
+    const TaxStrategy = {
+      switchTab(tabId, btn) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('tab-' + tabId).classList.add('active');
+        btn.classList.add('active');
+        APP.input.initMoneyFields();
+      },
+
+      // ==========================================
+      // 탭1: 종합소득세
+      // ==========================================
+      calcIncomeTax() {
+        const form = document.getElementById('taxIncomeForm');
+        const getVal = (name) => Number(form[name].value.replace(/[^0-9]/g, '')) * 10000;
+
+        const salary = getVal('salary');
+        const business = getVal('business');
+        const publicPension = getVal('publicPension');
+        const financial = getVal('financial');
+        const rental = getVal('rental');
+        const other = getVal('other');
+        const dependents = Number(form.dependents.value) || 1;
+        const npPaid = getVal('npPaid');
+        const pensionCreditInput = getVal('pensionCredit');
+
+        const grossIncome = salary + business + publicPension + financial + rental + other;
+        if (grossIncome <= 0) {
+          alert('소득 항목을 하나 이상 입력해주세요.');
+          return;
+        }
+
+        // 소득공제 계산 (간소화)
+        // 근로소득공제 (근로소득이 있을 때)
+        let earnedDeduction = 0;
+        if (salary > 0) {
+          if (salary <= 5000000) earnedDeduction = salary * 0.7;
+          else if (salary <= 15000000) earnedDeduction = 3500000 + (salary - 5000000) * 0.4;
+          else if (salary <= 45000000) earnedDeduction = 7500000 + (salary - 15000000) * 0.15;
+          else if (salary <= 100000000) earnedDeduction = 12000000 + (salary - 45000000) * 0.05;
+          else earnedDeduction = 14750000 + (salary - 100000000) * 0.02;
+        }
+
+        // 연금소득공제
+        const pensionDeduction = publicPension > 0
+          ? CalcEngine.tax.calcPensionDeduction(publicPension)
+          : 0;
+
+        // 인적공제
+        const personalDeduction = dependents * CONSTANTS.TAX.BASIC_DEDUCTION;
+
+        // 국민연금 보험료 공제 (소득공제)
+        const npDeduction = npPaid;
+
+        const totalDeductions = earnedDeduction + pensionDeduction + personalDeduction + npDeduction;
+        const taxableIncome = Math.max(grossIncome - totalDeductions, 0);
+
+        // 산출세액
+        const taxResult = CalcEngine.tax.calcIncomeTax(taxableIncome);
+
+        // 세액공제 (연금저축+IRP)
+        const pensionCreditBase = Math.min(pensionCreditInput, 9000000);
+        const creditRate = salary > 55000000 ? 0.132 : 0.165;
+        const pensionTaxCredit = Math.round(pensionCreditBase * creditRate);
+
+        const finalIncomeTax = Math.max(taxResult.incomeTax - pensionTaxCredit, 0);
+        const finalLocalTax = Math.round(finalIncomeTax * CONSTANTS.TAX.LOCAL_TAX_RATE);
+        const finalTotalTax = finalIncomeTax + finalLocalTax;
+        const effectiveRate = grossIncome > 0 ? finalTotalTax / grossIncome : 0;
+
+        // UI 업데이트
+        document.getElementById('it-empty').style.display = 'none';
+        document.getElementById('it-result').style.display = '';
+
+        document.getElementById('it-total-tax').textContent = APP.format.manwon(finalTotalTax);
+        document.getElementById('it-effective').textContent = `실효세율 ${APP.format.percent(effectiveRate)}`;
+        document.getElementById('it-gross').textContent = APP.format.manwon(grossIncome);
+        document.getElementById('it-taxable').textContent = APP.format.manwon(taxableIncome);
+        document.getElementById('it-rate').textContent = APP.format.percent(taxResult.appliedRate);
+        document.getElementById('it-credits').textContent = APP.format.manwon(pensionTaxCredit);
+
+        // 계산 과정
+        document.getElementById('it-process').innerHTML = `
+          <div class="calc-process-title">종합소득세 계산 과정</div>
+          <div class="calc-process-step">
+            <span class="step-num">1</span>
+            <span>총 소득금액</span>
+            <span class="step-formula">${APP.format.manwon(grossIncome)}</span>
+          </div>
+          ${salary > 0 ? `<div class="calc-process-step">
+            <span class="step-num">2</span>
+            <span>근로소득공제</span>
+            <span class="step-formula">-${APP.format.manwon(earnedDeduction)}</span>
+          </div>` : ''}
+          ${publicPension > 0 ? `<div class="calc-process-step">
+            <span class="step-num">${salary > 0 ? 3 : 2}</span>
+            <span>연금소득공제</span>
+            <span class="step-formula">-${APP.format.manwon(pensionDeduction)}</span>
+          </div>` : ''}
+          <div class="calc-process-step">
+            <span class="step-num">→</span>
+            <span>인적공제 (${dependents}명 × 150만원)</span>
+            <span class="step-formula">-${APP.format.manwon(personalDeduction)}</span>
+          </div>
+          ${npPaid > 0 ? `<div class="calc-process-step">
+            <span class="step-num">→</span>
+            <span>국민연금 보험료 공제</span>
+            <span class="step-formula">-${APP.format.manwon(npDeduction)}</span>
+          </div>` : ''}
+          <div class="calc-process-step">
+            <span class="step-num">→</span>
+            <span><strong>과세표준</strong></span>
+            <span class="step-formula"><strong>${APP.format.manwon(taxableIncome)}</strong></span>
+          </div>
+          <div class="calc-process-step">
+            <span class="step-num">→</span>
+            <span>산출세액 (세율 ${APP.format.percent(taxResult.appliedRate)})</span>
+            <span class="step-formula">${APP.format.manwon(taxResult.incomeTax)}</span>
+          </div>
+          ${pensionTaxCredit > 0 ? `<div class="calc-process-step">
+            <span class="step-num">→</span>
+            <span>연금 세액공제</span>
+            <span class="step-formula">-${APP.format.manwon(pensionTaxCredit)}</span>
+          </div>` : ''}
+          <div class="calc-process-step">
+            <span class="step-num">→</span>
+            <span>소득세</span>
+            <span class="step-formula">${APP.format.manwon(finalIncomeTax)}</span>
+          </div>
+          <div class="calc-process-step">
+            <span class="step-num">→</span>
+            <span>지방소득세 (10%)</span>
+            <span class="step-formula">${APP.format.manwon(finalLocalTax)}</span>
+          </div>
+          <div class="calc-process-step">
+            <span class="step-num">★</span>
+            <span><strong>총 세금</strong></span>
+            <span class="step-formula"><strong>${APP.format.manwon(finalTotalTax)}</strong></span>
+          </div>
+        `;
+
+        // 누진세율 구간 차트
+        const brackets = CONSTANTS.TAX.INCOME_TAX_BRACKETS;
+        const bracketLabels = [];
+        const bracketRates = [];
+        const bracketAmounts = [];
+        let prevLimit = 0;
+
+        for (const b of brackets) {
+          const upper = b.limit === Infinity ? prevLimit + 50000000 : b.limit;
+          bracketLabels.push(b.limit === Infinity
+            ? `${APP.format.number(prevLimit / 10000)}만~`
+            : `${APP.format.number(prevLimit / 10000)}~${APP.format.number(b.limit / 10000)}만`);
+          bracketRates.push(b.rate * 100);
+
+          // 이 구간에 해당하는 세금
+          const segmentLower = prevLimit;
+          const segmentUpper = Math.min(taxableIncome, b.limit === Infinity ? taxableIncome : b.limit);
+          const segmentAmount = segmentUpper > segmentLower
+            ? Math.round((segmentUpper - segmentLower) * b.rate)
+            : 0;
+          bracketAmounts.push(Math.round(segmentAmount / 10000));
+
+          prevLimit = b.limit === Infinity ? prevLimit : b.limit;
+          if (taxableIncome <= (b.limit === Infinity ? Infinity : b.limit)) break;
+        }
+
+        APP.chart.create('itBracketChart', {
+          type: 'bar',
+          data: {
+            labels: bracketLabels,
+            datasets: [
+              {
+                label: '구간별 세금 (만원)',
+                data: bracketAmounts,
+                backgroundColor: bracketAmounts.map((_, i) =>
+                  APP.chart.colors.palette[i % APP.chart.colors.palette.length] + '66'
+                ),
+                borderColor: bracketAmounts.map((_, i) =>
+                  APP.chart.colors.palette[i % APP.chart.colors.palette.length]
+                ),
+                borderWidth: 2,
+              }
+            ]
+          },
+          options: {
+            plugins: {
+              title: { display: true, text: '과세표준 구간별 세금 (만원)', font: { size: 16 } }
+            },
+            scales: {
+              y: { title: { display: true, text: '만원' }, beginAtZero: true }
+            }
+          }
+        });
+
+        // 세율표
+        const tableBody = CONSTANTS.TAX.INCOME_TAX_BRACKETS.map((b, i) => {
+          const prevL = i === 0 ? 0 : CONSTANTS.TAX.INCOME_TAX_BRACKETS[i - 1].limit;
+          const isActive = taxableIncome > prevL && (i === 0 || taxableIncome > CONSTANTS.TAX.INCOME_TAX_BRACKETS[i - 1].limit);
+          const isCurrent = taxableIncome <= b.limit && taxableIncome > prevL;
+          return `<tr${isCurrent ? ' style="background:var(--primary-alpha); font-weight:700;"' : ''}>
+            <td>${b.limit === Infinity ? APP.format.number(prevL / 10000) + '만원 초과' : APP.format.number(prevL / 10000) + ' ~ ' + APP.format.number(b.limit / 10000) + '만원'}</td>
+            <td>${(b.rate * 100)}%</td>
+            <td>${APP.format.number(b.deduction / 10000)}만원</td>
+            <td>${isCurrent ? '← 해당 구간' : ''}</td>
+          </tr>`;
+        }).join('');
+        document.querySelector('#it-bracket-table tbody').innerHTML = tableBody;
+
+        APP.storage.saveForm('taxIncomeForm');
+      },
+
+      // ==========================================
+      // 탭2: 연금소득 절세
+      // ==========================================
+      calcPensionTax() {
+        const form = document.getElementById('taxPensionForm');
+        const getVal = (name) => Number(form[name].value.replace(/[^0-9]/g, '')) * 10000;
+
+        const age = Number(form.age.value) || 65;
+        const privatePension = getVal('privatePension');
+        const publicPension = getVal('publicPension');
+        const finIncome = getVal('finIncome');
+        const etcIncome = getVal('etcIncome');
+        const otherIncome = publicPension + finIncome + etcIncome;
+
+        // 분리과세 vs 종합과세 비교
+        const comparison = CalcEngine.tax.comparePrivatePensionTax(privatePension, otherIncome, age);
+
+        // 기타소득 세금 (공적연금+금융+기타 종합과세)
+        const otherTaxable = Math.max(otherIncome - CalcEngine.tax.calcPensionDeduction(publicPension) - CONSTANTS.TAX.BASIC_DEDUCTION, 0);
+        const otherTaxResult = CalcEngine.tax.calcIncomeTax(otherTaxable);
+
+        document.getElementById('pt-empty').style.display = 'none';
+        document.getElementById('pt-result').style.display = '';
+
+        // 분리과세 카드
+        document.getElementById('pt-sep-rate').textContent = APP.format.percent(comparison.separate.rate);
+        document.getElementById('pt-sep-tax').textContent = APP.format.manwon(comparison.separate.totalTax);
+        document.getElementById('pt-sep-other-tax').textContent = APP.format.manwon(otherTaxResult.totalTax);
+        document.getElementById('pt-sep-total').textContent = APP.format.manwon(comparison.separate.totalTax + otherTaxResult.totalTax);
+
+        // 종합과세 카드
+        document.getElementById('pt-comp-income').textContent = APP.format.manwon(comparison.comprehensive.totalIncome);
+        document.getElementById('pt-comp-deduction').textContent = '-' + APP.format.manwon(comparison.comprehensive.pensionDeduction);
+        document.getElementById('pt-comp-tax').textContent = APP.format.manwon(comparison.comprehensive.tax);
+        document.getElementById('pt-comp-total').textContent = APP.format.manwon(comparison.comprehensive.tax);
+
+        // 추천
+        const sepCard = document.getElementById('pt-sep-card');
+        const compCard = document.getElementById('pt-comp-card');
+        if (comparison.recommended === '분리과세') {
+          sepCard.classList.add('recommended');
+          compCard.classList.remove('recommended');
+        } else {
+          compCard.classList.add('recommended');
+          sepCard.classList.remove('recommended');
+        }
+
+        const limit = CONSTANTS.TAX.PRIVATE_PENSION_SEPARATE_LIMIT;
+        document.getElementById('pt-recommend-text').innerHTML =
+          `<strong>${comparison.recommended}이 유리합니다.</strong> 절세 효과: <strong>${APP.format.manwon(comparison.saving)}</strong><br>` +
+          (privatePension <= limit
+            ? `사적연금 ${APP.format.manwon(privatePension)}은 1,500만원 이하이므로 저율 분리과세(${APP.format.percent(comparison.separate.rate)})가 적용됩니다.`
+            : `사적연금 ${APP.format.manwon(privatePension)}은 1,500만원을 초과하므로 15% 분리과세 또는 종합과세 중 선택할 수 있습니다.`);
+
+        // 최적 수령액 차트: 사적연금 금액별 세금 변화
+        const chartLabels = [];
+        const chartSep = [];
+        const chartComp = [];
+        for (let amount = 0; amount <= 40000000; amount += 1000000) {
+          chartLabels.push(Math.round(amount / 10000) + '만');
+          const c = CalcEngine.tax.comparePrivatePensionTax(amount, otherIncome, age);
+          chartSep.push(Math.round((c.separate.totalTax) / 10000));
+          chartComp.push(Math.round(c.comprehensive.additionalTax / 10000));
+        }
+
+        APP.chart.create('ptOptimalChart', {
+          type: 'line',
+          data: {
+            labels: chartLabels,
+            datasets: [
+              {
+                label: '분리과세 세금 (만원)',
+                data: chartSep,
+                borderColor: APP.chart.colors.primary,
+                backgroundColor: APP.chart.colors.primaryAlpha,
+                fill: false, tension: 0.3,
+              },
+              {
+                label: '종합과세 추가세금 (만원)',
+                data: chartComp,
+                borderColor: APP.chart.colors.danger,
+                backgroundColor: APP.chart.colors.dangerAlpha,
+                fill: false, tension: 0.3,
+                borderDash: [5, 5],
+              }
+            ]
+          },
+          options: {
+            plugins: {
+              title: { display: true, text: '사적연금 수령액별 세금 비교', font: { size: 16 } },
+              annotation: undefined,
+            },
+            scales: {
+              x: { title: { display: true, text: '사적연금 연간 수령액' } },
+              y: { title: { display: true, text: '세금 (만원)' }, beginAtZero: true }
+            }
+          }
+        });
+
+        APP.storage.saveForm('taxPensionForm');
+      },
+
+      // ==========================================
+      // 탭3: 퇴직소득세
+      // ==========================================
+      calcRetireTax() {
+        const form = document.getElementById('taxRetireForm');
+        const retireIncome = Number(form.retireIncome.value.replace(/[^0-9]/g, '')) * 10000;
+        const serviceYears = Number(form.serviceYears.value) || 20;
+
+        const tax = CalcEngine.retirementPension.calcRetirementIncomeTax(retireIncome, serviceYears);
+        const netAmount = retireIncome - tax.totalTax;
+
+        document.getElementById('rt-empty').style.display = 'none';
+        document.getElementById('rt-result').style.display = '';
+
+        document.getElementById('rt-total-tax').textContent = APP.format.manwon(tax.totalTax);
+        document.getElementById('rt-effective').textContent = `실효세율 ${APP.format.percent(tax.effectiveRate)}, 근속 ${serviceYears}년`;
+        document.getElementById('rt-gross').textContent = APP.format.manwon(retireIncome);
+        document.getElementById('rt-net').textContent = APP.format.manwon(netAmount);
+        document.getElementById('rt-income-tax').textContent = APP.format.manwon(tax.incomeTax);
+        document.getElementById('rt-local-tax').textContent = APP.format.manwon(tax.localTax);
+
+        // 계산 과정
+        document.getElementById('rt-process').innerHTML = `
+          <div class="calc-process-title">연분연승법 상세 과정</div>
+          <div class="calc-process-step">
+            <span class="step-num">1</span>
+            <span>퇴직급여액</span>
+            <span class="step-formula">${APP.format.manwon(retireIncome)}</span>
+          </div>
+          <div class="calc-process-step">
+            <span class="step-num">2</span>
+            <span>근속연수공제 (${serviceYears}년)</span>
+            <span class="step-formula">-${APP.format.manwon(tax.serviceDeduction)}</span>
+          </div>
+          <div class="calc-process-step">
+            <span class="step-num">3</span>
+            <span>퇴직소득과세표준</span>
+            <span class="step-formula">${APP.format.manwon(tax.taxBase1)}</span>
+          </div>
+          <div class="calc-process-step">
+            <span class="step-num">4</span>
+            <span>환산급여 = 과세표준 × 12 ÷ ${serviceYears}</span>
+            <span class="step-formula">${APP.format.manwon(tax.convertedIncome)}</span>
+          </div>
+          <div class="calc-process-step">
+            <span class="step-num">5</span>
+            <span>환산급여공제</span>
+            <span class="step-formula">-${APP.format.manwon(tax.convertedDeduction)}</span>
+          </div>
+          <div class="calc-process-step">
+            <span class="step-num">6</span>
+            <span>환산과세표준</span>
+            <span class="step-formula">${APP.format.manwon(tax.taxableConverted)}</span>
+          </div>
+          <div class="calc-process-step">
+            <span class="step-num">7</span>
+            <span>환산산출세액 (종합소득세율 적용)</span>
+            <span class="step-formula">${APP.format.manwon(tax.convertedTax)}</span>
+          </div>
+          <div class="calc-process-step">
+            <span class="step-num">8</span>
+            <span>산출세액 = 환산세액 × ${serviceYears} ÷ 12</span>
+            <span class="step-formula">${APP.format.manwon(tax.incomeTax)}</span>
+          </div>
+          <div class="calc-process-step">
+            <span class="step-num">9</span>
+            <span>지방소득세 (10%)</span>
+            <span class="step-formula">${APP.format.manwon(tax.localTax)}</span>
+          </div>
+          <div class="calc-process-step">
+            <span class="step-num">★</span>
+            <span><strong>총 납부세액</strong></span>
+            <span class="step-formula"><strong>${APP.format.manwon(tax.totalTax)}</strong></span>
+          </div>
+        `;
+
+        // 파이 차트
+        APP.chart.create('rtPieChart', {
+          type: 'doughnut',
+          data: {
+            labels: ['세후 수령액', '퇴직소득세', '지방소득세'],
+            datasets: [{
+              data: [netAmount, tax.incomeTax, tax.localTax],
+              backgroundColor: [APP.chart.colors.secondary, APP.chart.colors.danger, APP.chart.colors.accent],
+              borderWidth: 2,
+            }]
+          },
+          options: {
+            plugins: {
+              title: { display: true, text: '퇴직금 세금 구성', font: { size: 16 } }
+            }
+          }
+        });
+
+        // 연금전환 절세 효과
+        const pensionCompare = CalcEngine.retirementPension.compareLumpSumVsPension(retireIncome, serviceYears, 10, 0.03, 55);
+        document.getElementById('rt-lump-tax').textContent = APP.format.manwon(pensionCompare.lumpSum.tax);
+        document.getElementById('rt-pension-tax').textContent = APP.format.manwon(pensionCompare.pension.totalTax);
+        document.getElementById('rt-saving').textContent = pensionCompare.taxSaving > 0
+          ? APP.format.manwon(pensionCompare.taxSaving)
+          : APP.format.manwon(Math.abs(pensionCompare.taxSaving));
+
+        APP.storage.saveForm('taxRetireForm');
+      },
+
+      calcRetireCompare() {
+        const form = document.getElementById('taxRetireForm');
+        const retireIncome = Number(form.retireIncome.value.replace(/[^0-9]/g, '')) * 10000;
+
+        if (retireIncome <= 0) {
+          alert('퇴직금을 먼저 입력해주세요.');
+          return;
+        }
+
+        document.getElementById('rt-compare').style.display = '';
+
+        const labels = [];
+        const taxes = [];
+        const rates = [];
+        const netAmounts = [];
+
+        for (let y = 5; y <= 35; y += 5) {
+          labels.push(y + '년');
+          const t = CalcEngine.retirementPension.calcRetirementIncomeTax(retireIncome, y);
+          taxes.push(Math.round(t.totalTax / 10000));
+          rates.push(Number((t.effectiveRate * 100).toFixed(2)));
+          netAmounts.push(Math.round((retireIncome - t.totalTax) / 10000));
+        }
+
+        APP.chart.create('rtCompareChart', {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: '세금 (만원)',
+                data: taxes,
+                backgroundColor: APP.chart.colors.dangerAlpha,
+                borderColor: APP.chart.colors.danger,
+                borderWidth: 2,
+                yAxisID: 'y',
+              },
+              {
+                label: '실효세율 (%)',
+                data: rates,
+                type: 'line',
+                borderColor: APP.chart.colors.primary,
+                backgroundColor: APP.chart.colors.primaryAlpha,
+                tension: 0.3,
+                yAxisID: 'y1',
+              }
+            ]
+          },
+          options: {
+            plugins: {
+              title: { display: true, text: `퇴직금 ${APP.format.manwon(retireIncome)} 기준 근속연수별 세금`, font: { size: 16 } }
+            },
+            scales: {
+              y: {
+                type: 'linear', position: 'left',
+                title: { display: true, text: '세금 (만원)' },
+                beginAtZero: true,
+              },
+              y1: {
+                type: 'linear', position: 'right',
+                title: { display: true, text: '실효세율 (%)' },
+                beginAtZero: true,
+                grid: { drawOnChartArea: false },
+              }
+            }
+          }
+        });
+
+        document.getElementById('rt-compare-text').innerHTML =
+          `<strong>근속연수가 길수록 세금이 줄어듭니다.</strong><br>` +
+          `같은 퇴직금 ${APP.format.manwon(retireIncome)} 기준으로:<br>` +
+          `• 근속 5년: 세금 ${APP.format.manwon(taxes[0] * 10000)} (실효 ${rates[0]}%)<br>` +
+          `• 근속 20년: 세금 ${APP.format.manwon(taxes[3] * 10000)} (실효 ${rates[3]}%)<br>` +
+          `• 근속 35년: 세금 ${APP.format.manwon(taxes[taxes.length - 1] * 10000)} (실효 ${rates[rates.length - 1]}%)<br>` +
+          `연분연승법에서 근속연수가 공제와 세율 분할에 모두 영향을 줍니다.`;
+      },
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      APP.storage.restoreForm('taxIncomeForm');
+      APP.storage.restoreForm('taxPensionForm');
+      APP.storage.restoreForm('taxRetireForm');
+    });
+  </script>
+</body>
+</html>

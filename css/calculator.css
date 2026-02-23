@@ -1,0 +1,372 @@
+/* ============================================
+   계산기 전용 UI 스타일
+   좌측 입력 / 우측 결과+차트 (모바일: 상하 스택)
+   ============================================ */
+
+/* 계산기 레이아웃: 좌 입력 / 우 결과 */
+.calc-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+.calc-input-panel {
+  position: sticky;
+  top: calc(var(--nav-height) + 24px);
+}
+
+.calc-result-panel {
+  min-height: 200px;
+}
+
+/* 스텝 인디케이터 */
+.calc-steps {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.calc-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--bg);
+  border-radius: 20px;
+  font-size: var(--font-sm);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.calc-step.active {
+  background: var(--primary);
+  color: white;
+}
+
+.calc-step.completed {
+  background: var(--secondary-alpha);
+  color: var(--secondary);
+}
+
+.calc-step-number {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* 입력 섹션 구분 */
+.input-section {
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px dashed var(--border);
+}
+
+.input-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.input-section-title {
+  font-size: var(--font-base);
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 16px;
+}
+
+/* 입력 필드 인라인 */
+.form-inline {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.form-inline .form-group {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+/* 라디오/체크박스 그룹 */
+.option-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.option-btn {
+  flex: 1;
+  min-width: 100px;
+  padding: 12px 16px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-white);
+  cursor: pointer;
+  text-align: center;
+  font-size: var(--font-base);
+  font-weight: 600;
+  color: var(--text-light);
+  transition: all 0.2s;
+}
+
+.option-btn:hover {
+  border-color: var(--primary-light);
+}
+
+.option-btn.active {
+  border-color: var(--primary);
+  background: var(--primary-alpha);
+  color: var(--primary);
+}
+
+.option-btn input {
+  display: none;
+}
+
+/* 결과 요약 배너 */
+.result-banner {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: white;
+  border-radius: var(--radius);
+  padding: 28px;
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.result-banner .label {
+  font-size: var(--font-base);
+  opacity: 0.9;
+  margin-bottom: 8px;
+}
+
+.result-banner .amount {
+  font-size: var(--font-3xl);
+  font-weight: 800;
+}
+
+.result-banner .sub {
+  font-size: var(--font-sm);
+  opacity: 0.8;
+  margin-top: 4px;
+}
+
+/* 결과 미니 카드 그리드 */
+.result-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.result-mini {
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  text-align: center;
+}
+
+.result-mini .label {
+  font-size: var(--font-sm);
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.result-mini .value {
+  font-size: var(--font-xl);
+  font-weight: 800;
+  color: var(--primary);
+}
+
+.result-mini .value.green {
+  color: var(--secondary);
+}
+
+.result-mini .value.red {
+  color: var(--danger);
+}
+
+.result-mini .value.orange {
+  color: var(--accent);
+}
+
+/* 시나리오 비교 카드 */
+.scenario-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.scenario-card {
+  border-radius: var(--radius);
+  padding: 20px;
+  text-align: center;
+  border: 2px solid var(--border);
+  background: var(--bg-white);
+  transition: all 0.2s;
+}
+
+.scenario-card.best {
+  border-color: var(--secondary);
+  background: var(--secondary-alpha);
+}
+
+.scenario-card .scenario-label {
+  font-size: var(--font-sm);
+  font-weight: 700;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.scenario-card .scenario-value {
+  font-size: var(--font-2xl);
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.scenario-card .scenario-desc {
+  font-size: var(--font-sm);
+  color: var(--text-muted);
+}
+
+/* 계산 과정 표시 */
+.calc-process {
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  padding: 20px;
+  margin: 16px 0;
+}
+
+.calc-process-title {
+  font-size: var(--font-base);
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--primary);
+}
+
+.calc-process-step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  font-size: var(--font-sm);
+  color: var(--text-light);
+}
+
+.calc-process-step .step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.calc-process-step .step-formula {
+  font-family: 'Consolas', monospace;
+  background: var(--bg-white);
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-left: auto;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+/* 하이라이트 숫자 */
+.highlight-num {
+  font-weight: 800;
+  color: var(--primary);
+}
+
+.highlight-num.green {
+  color: var(--secondary);
+}
+
+.highlight-num.red {
+  color: var(--danger);
+}
+
+/* 빈 결과 안내 */
+.empty-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.empty-result .icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-result .text {
+  font-size: var(--font-lg);
+  font-weight: 600;
+}
+
+.empty-result .sub-text {
+  font-size: var(--font-sm);
+  margin-top: 8px;
+}
+
+/* ============================================
+   반응형 - 모바일에서 상하 스택
+   ============================================ */
+@media (max-width: 768px) {
+  .calc-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .calc-input-panel {
+    position: static;
+  }
+
+  .scenario-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .result-mini-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .result-banner .amount {
+    font-size: var(--font-2xl);
+  }
+
+  .option-group {
+    flex-direction: column;
+  }
+
+  .form-inline {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .form-inline .form-group {
+    width: 100%;
+    margin-bottom: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .result-mini-grid {
+    grid-template-columns: 1fr;
+  }
+}
