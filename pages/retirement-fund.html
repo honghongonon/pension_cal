@@ -415,20 +415,23 @@
         const retireAge = Number(form.retireAge.value) || 60;
         const endAge = Number(form.endAge.value) || 90;
         const monthlyExpense = Number(form.monthlyExpense.value.replace(/[^0-9]/g, '')) * 10000;
+        const monthlyPension = form.monthlyPension ? (Number(form.monthlyPension.value.replace(/[^0-9]/g, '')) * 10000 || 0) : 0;
         const inflation = Number(form.inflation.value) / 100;
         const returnRate = Number(form.returnRate.value) / 100;
 
-        const result = CalcEngine.retirementFund.calcRequiredFund(monthlyExpense, retireAge, endAge, inflation, returnRate);
+        // 아버님 피드백 반영: 부족한 차액(Gap)에 대해서만 필요자금 역산
+        const netExpense = Math.max(monthlyExpense - monthlyPension, 0);
+        const result = CalcEngine.retirementFund.calcRequiredFund(netExpense, retireAge, endAge, inflation, returnRate);
 
-        // 80세 시점 월생활비
+        // 80세 시점 월생활비 부족분
         const years80 = Math.max(80 - retireAge, 0);
-        const cost80 = monthlyExpense * Math.pow(1 + inflation, years80);
+        const cost80 = netExpense * Math.pow(1 + inflation, years80);
 
         document.getElementById('nd-empty').style.display = 'none';
         document.getElementById('nd-result').style.display = '';
 
         document.getElementById('nd-pv').textContent = APP.format.manwon(result.presentValue);
-        document.getElementById('nd-info').textContent = `${retireAge}세~${endAge}세, 월 ${APP.format.manwon(monthlyExpense)} 기준`;
+        document.getElementById('nd-info').textContent = `연금 외 월 부족액 ${APP.format.manwon(netExpense)}을 메꾸기 위해 은퇴 시점에 필요한 일시금`;
         document.getElementById('nd-nominal').textContent = APP.format.manwon(result.nominalTotal);
         document.getElementById('nd-years').textContent = result.years + '년';
         document.getElementById('nd-80cost').textContent = APP.format.manwon(cost80);
@@ -442,7 +445,7 @@
           data: {
             labels: ages,
             datasets: [{
-              label: '연간 필요생활비 (만원)',
+              label: '연간 추가 부족액 (만원)',
               data: expenses,
               backgroundColor: expenses.map((_, i) => {
                 const ratio = i / expenses.length;
@@ -461,7 +464,7 @@
           },
           options: {
             plugins: {
-              title: { display: true, text: '연간 필요생활비 (물가상승 반영)', font: { size: 16 } }
+              title: { display: true, text: '연간 부족액 추이 (물가상승 반영)', font: { size: 16 } }
             },
             scales: { y: { title: { display: true, text: '만원' }, beginAtZero: true } }
           }
