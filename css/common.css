@@ -655,30 +655,31 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background: var(--info);
   color: white;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   cursor: help;
-  margin-left: 4px;
+  margin-left: 6px;
   flex-shrink: 0;
 }
 
 .tooltip-popup {
   position: absolute;
-  background: var(--text);
+  background: rgba(44, 62, 80, 0.95);
   color: white;
-  padding: 10px 14px;
+  padding: 14px 18px;
   border-radius: var(--radius-sm);
-  font-size: var(--font-sm);
-  max-width: 300px;
+  font-size: var(--font-base);
+  max-width: 320px;
   z-index: 2000;
-  line-height: 1.5;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  line-height: 1.6;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
   animation: tooltipFade 0.2s ease;
+  backdrop-filter: blur(4px);
 }
 
 @keyframes tooltipFade {

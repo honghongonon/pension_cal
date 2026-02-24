@@ -349,11 +349,25 @@
               title: { 
                 display: true, 
                 text: '연금수령액 vs 필요생활비 (연간, 물가상승률 2.5% 반영)', 
-                font: { size: 16 } 
+                font: { size: 18, weight: 'bold' } 
+              },
+              legend: {
+                labels: { font: { size: 14 } }
+              },
+              tooltip: {
+                bodyFont: { size: 16 },
+                titleFont: { size: 16 },
+                padding: 12
               }
             },
             scales: {
-              y: { title: { display: true, text: '만원' } }
+              y: { 
+                title: { display: true, text: '만원', font: { size: 14, weight: 'bold' } },
+                ticks: { font: { size: 13 } }
+              },
+              x: {
+                ticks: { font: { size: 13 } }
+              }
             }
           }
         });
@@ -389,7 +403,14 @@
               title: { 
                 display: true, 
                 text: `월 생활비 ${APP.format.manwon(expense)} 충당 구조 (물가상승 반영)`, 
-                font: { size: 14 } 
+                font: { size: 16, weight: 'bold' } 
+              },
+              legend: {
+                labels: { font: { size: 14 } }
+              },
+              tooltip: {
+                bodyFont: { size: 16 },
+                padding: 12
               }
             }
           }
@@ -417,13 +438,25 @@
               title: { 
                 display: true, 
                 text: '보유자산 소진 추이 (투자수익 4%, 물가 2.5%)', 
-                font: { size: 14 } 
+                font: { size: 16, weight: 'bold' } 
+              },
+              legend: {
+                labels: { font: { size: 14 } }
+              },
+              tooltip: {
+                bodyFont: { size: 16 },
+                titleFont: { size: 16 },
+                padding: 12
               }
             },
             scales: {
               y: {
-                title: { display: true, text: '만원' },
+                title: { display: true, text: '만원', font: { size: 14, weight: 'bold' } },
+                ticks: { font: { size: 13 } },
                 beginAtZero: true,
+              },
+              x: {
+                ticks: { font: { size: 13 } }
               }
             }
           }

@@ -168,18 +168,19 @@
 .result-mini {
   background: var(--bg);
   border-radius: var(--radius-sm);
-  padding: 16px;
+  padding: 20px;
   text-align: center;
 }
 
 .result-mini .label {
-  font-size: var(--font-sm);
-  color: var(--text-muted);
-  margin-bottom: 4px;
+  font-size: var(--font-base);
+  color: var(--text-light);
+  margin-bottom: 8px;
+  font-weight: 600;
 }
 
 .result-mini .value {
-  font-size: var(--font-xl);
+  font-size: var(--font-2xl);
   font-weight: 800;
   color: var(--primary);
 }
