@@ -81,15 +81,16 @@
                 </div>
               </div>
               <div class="input-section">
-                <div class="input-section-title">자동차</div>
+                <div class="input-section-title">자동차 (2024.02 폐지)</div>
+                <p class="form-help" style="margin-bottom: 10px; color: var(--primary);">2024년 2월부터 자동차에 대한 보험료 부과는 전면 폐지되었습니다.</p>
                 <div class="form-group">
                   <label class="form-label">자동차 가액 <span class="unit">(만원)</span></label>
                   <div class="input-group">
-                    <input type="text" class="form-input" name="carValue" data-type="money" value="0">
+                    <input type="text" class="form-input" name="carValue" data-type="money" value="0" disabled>
                     <span class="input-suffix">만원</span>
                   </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group" style="display:none;">
                   <label class="form-label">배기량 <span class="unit">(cc)</span></label>
                   <div class="input-group">
                     <input type="number" class="form-input" name="carCC" value="0" min="0" max="10000">
@@ -400,8 +401,8 @@
             <span class="value">${APP.format.won(result.breakdown.property)}</span>
           </div>
           <div class="result-row">
-            <span class="label">자동차 부분 보험료</span>
-            <span class="value">${APP.format.won(result.breakdown.car)}</span>
+            <span class="label">자동차 부분 보험료 (2024.02 폐지)</span>
+            <span class="value">${APP.format.won(0)}</span>
           </div>
           <div class="result-row">
             <span class="label"><strong>건강보험료 소계</strong></span>
