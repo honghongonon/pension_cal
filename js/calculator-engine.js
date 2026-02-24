@@ -122,14 +122,17 @@ const CalcEngine = {
      */
     calcAdditionalPayment(currentPension, additionalMonths, currentAvgIncome) {
       const NP = CONSTANTS.NATIONAL_PENSION;
-      const cost = currentAvgIncome * NP.RATE * additionalMonths;
+      // 법적 최대 추납 기간 제한 (119개월)
+      const validMonths = Math.min(additionalMonths, NP.MAX_ADDITIONAL_MONTHS);
+      
+      const cost = currentAvgIncome * NP.RATE * validMonths;
       // 추납으로 인한 가입기간 증가 효과 (근사)
-      const increaseRate = additionalMonths / 12 * 0.05;
+      const increaseRate = validMonths / 12 * 0.05;
       const increase = Math.round(currentPension * increaseRate);
       const newPension = currentPension + increase;
       const breakEvenMonths = increase > 0 ? Math.ceil(cost / increase) : Infinity;
 
-      return { cost, newPension, increase, breakEvenMonths };
+      return { cost, newPension, increase, breakEvenMonths, appliedMonths: validMonths };
     },
   },
 

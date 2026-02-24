@@ -84,11 +84,14 @@
             <div class="input-section">
               <div class="input-section-title">추납 분석 (선택)</div>
               <div class="form-group">
-                <label class="form-label">추납 기간 <span class="unit">(개월)</span></label>
+                <label class="form-label">추납 기간 <span class="unit">(개월)</span>
+                  <span class="tooltip-trigger" data-tooltip="국민연금 추납은 2020.12 개정법에 따라 최대 10년 미만(119개월)까지만 가능합니다.">?</span>
+                </label>
                 <div class="input-group">
-                  <input type="number" class="form-input" name="additionalMonths" min="0" max="120" value="0">
+                  <input type="number" class="form-input" name="additionalMonths" min="0" max="119" value="0">
                   <span class="input-suffix">개월</span>
                 </div>
+                <p class="form-help">최대 119개월(10년 미만) 가능</p>
               </div>
             </div>
 
@@ -329,10 +332,15 @@
           document.getElementById('np-addpay-breakeven').textContent = beMonths < Infinity
             ? Math.ceil(beMonths / 12) + '년 ' + (beMonths % 12) + '개월'
             : '해당없음';
-          document.getElementById('np-addpay-summary').innerHTML =
-            `추납 비용 <strong>${APP.format.manwon(addPay.cost)}</strong>을 납부하면 월 연금이 ` +
-            `<strong>${APP.format.manwon(addPay.increase)}</strong> 증가합니다. ` +
-            `약 <strong>${Math.ceil(beMonths / 12)}년</strong> 수령 시 손익분기점에 도달합니다.`;
+          
+          let summaryText = `추납 비용 <strong>${APP.format.manwon(addPay.cost)}</strong>을 납부하면 월 연금이 ` +
+            `<strong>${APP.format.manwon(addPay.increase)}</strong> 증가합니다. `;
+          
+          if (additionalMonths > 119) {
+            summaryText += `<br><span style="color:var(--danger); font-size:var(--font-sm);">* 법적 최대 추납 기간인 119개월만 반영되었습니다.</span>`;
+          }
+          
+          document.getElementById('np-addpay-summary').innerHTML = summaryText;
         } else {
           document.getElementById('np-addpay-card').style.display = 'none';
         }
