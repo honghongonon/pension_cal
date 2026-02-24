@@ -653,17 +653,20 @@ const CalcEngine = {
 
       const totalMonthly = Math.round(monthlyFromAssets + monthlyPension);
 
-      // 자산 소진 추이 시뮬레이션
+      // 자산 소진 추이 시뮬레이션 (월 단위 계산, 연 단위 기록)
       let balance = totalAssets;
       const assetTimeline = [];
 
-      for (let y = 0; y < years; y++) {
-        const annualWithdrawal = monthlyFromAssets * 12 * Math.pow(1 + inflationRate, y);
-        balance = balance * (1 + returnRate) - annualWithdrawal;
-        assetTimeline.push({
-          age: retireAge + y,
-          balance: Math.max(Math.round(balance), 0),
-        });
+      for (let m = 0; m < months; m++) {
+        const withdrawal = monthlyFromAssets * Math.pow(1 + monthlyInflation, m);
+        balance = balance * (1 + monthlyReturn) - withdrawal;
+        // 매년 말(12월)마다 기록
+        if ((m + 1) % 12 === 0) {
+          assetTimeline.push({
+            age: retireAge + (m + 1) / 12,
+            balance: Math.max(Math.round(balance), 0),
+          });
+        }
       }
 
       return {
