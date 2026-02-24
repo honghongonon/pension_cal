@@ -457,33 +457,32 @@ const CalcEngine = {
      */
     calcRegionalPremium(annualIncome, propertyValue = 0, carValue = 0, carCC = 0) {
       const HI = CONSTANTS.HEALTH_INSURANCE;
+      const RG = HI.REGIONAL;
 
       // 1. 소득 부분 보험료 (연소득 기준)
       const monthlyIncome = annualIncome / 12;
       const incomePremium = Math.round(monthlyIncome * HI.RATE);
 
-      // 2. 재산 부분 보험료 (간소화)
+      // 2. 재산 부분 보험료 (60등급 점수제)
+      // 기본공제 1억원(10,000만원) 차감 후 등급 조회
+      const propertyAfterDeduction = Math.max(propertyValue - RG.BASIC_DEDUCTION, 0);
       let propertyScore = 0;
-      const propertyExcess = Math.max(propertyValue - 4500, 0); // 기본공제 4,500만원
-      if (propertyExcess > 0) {
-        // 간소화: 초과분에 대해 등급별 점수
-        const brackets = HI.REGIONAL.PROPERTY_SCORE.BRACKETS;
-        for (let i = 1; i < brackets.length; i++) {
-          const prevLimit = brackets[i - 1].limit;
-          const currLimit = brackets[i].limit;
-          if (propertyValue <= currLimit) {
-            propertyScore = Math.round(propertyExcess / 100) * brackets[i].perUnit;
+      if (propertyAfterDeduction > 0) {
+        const grades = RG.PROPERTY_GRADE;
+        for (let i = 1; i < grades.length; i++) {
+          if (propertyAfterDeduction <= grades[i].limit) {
+            propertyScore = grades[i].score;
             break;
           }
         }
       }
-      const propertyPremium = Math.round(propertyScore * HI.REGIONAL.PROPERTY_SCORE.POINT_VALUE);
+      const propertyPremium = Math.round(propertyScore * RG.POINT_VALUE);
 
       // 3. 자동차 부분 (4천만원 미만/1600cc 미만 면제)
       let carPremium = 0;
       if (carValue >= 4000 && carCC >= 1600) {
-        let carScore = carCC >= 3000 ? HI.REGIONAL.CAR_SCORE.OVER_3000 : HI.REGIONAL.CAR_SCORE.OVER_1600_UNDER_3000;
-        carPremium = Math.round(carScore * HI.REGIONAL.PROPERTY_SCORE.POINT_VALUE);
+        let carScore = carCC >= 3000 ? RG.CAR_SCORE.OVER_3000 : RG.CAR_SCORE.OVER_1600_UNDER_3000;
+        carPremium = Math.round(carScore * RG.POINT_VALUE);
       }
 
       // 월 건강보험료 합계

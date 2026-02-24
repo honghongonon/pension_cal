@@ -64,7 +64,7 @@
                 <div class="input-section-title">재산</div>
                 <div class="form-group">
                   <label class="form-label">재산세 과표 <span class="unit">(만원)</span>
-                    <span class="tooltip-trigger" data-tooltip="재산세 과세표준 = 공시가격의 약 60%. 아파트 공시가 5억이면 과표 약 3억입니다.">?</span>
+                    <span class="tooltip-trigger" data-tooltip="재산세 과세표준 = 공시가격의 약 60%. 아파트 공시가 5억이면 과표 약 3억. 기본공제 1억원 적용 후 등급별 점수 산정.">?</span>
                   </label>
                   <div class="input-group">
                     <input type="text" class="form-input" name="propertyValue" data-type="money" value="30,000">
@@ -368,10 +368,24 @@
         document.getElementById('rg-annual').textContent = APP.format.manwon(result.total * 12);
 
         // 구성 내역
+        const basicDeduction = CONSTANTS.HEALTH_INSURANCE.REGIONAL.BASIC_DEDUCTION;
+        const afterDeduction = Math.max(propertyValue - basicDeduction, 0);
         document.getElementById('rg-details').innerHTML = `
           <div class="result-row">
             <span class="label">소득 부분 보험료</span>
             <span class="value">${APP.format.won(result.breakdown.income)}</span>
+          </div>
+          <div class="result-row">
+            <span class="label">재산과표</span>
+            <span class="value">${APP.format.manwon(propertyValue * 10000)}</span>
+          </div>
+          <div class="result-row">
+            <span class="label">재산 기본공제</span>
+            <span class="value">-${APP.format.manwon(basicDeduction * 10000)}</span>
+          </div>
+          <div class="result-row">
+            <span class="label">공제 후 재산금액 (등급 산정 기준)</span>
+            <span class="value">${APP.format.manwon(afterDeduction * 10000)}</span>
           </div>
           <div class="result-row">
             <span class="label">재산 부분 보험료</span>

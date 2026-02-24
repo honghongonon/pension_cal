@@ -37,10 +37,10 @@ const CONSTANTS = {
     // 수령 개시 연령 (출생연도별)
     START_AGE: {
       DEFAULT: 65,                  // 1969년 이후 출생
-      1953_1956: 61,
-      1957_1960: 62,
-      1961_1964: 63,
-      1965_1968: 64,
+      '1953_1956': 61,
+      '1957_1960': 62,
+      '1961_1964': 63,
+      '1965_1968': 64,
     },
 
     // 물가상승률 반영 (평균)
@@ -158,20 +158,73 @@ const CONSTANTS = {
 
     // 지역가입자 부과요소
     REGIONAL: {
-      // 소득 점수 (2025년 기준 간소화)
-      INCOME_SCORE_RATE: 0.0719,    // 소득 × 보험료율
-      PROPERTY_SCORE: {
-        // 재산과표 구간별 점수
-        BRACKETS: [
-          { limit: 4500, score: 0 },       // 4,500만원 이하 면제 (기본공제)
-          { limit: 9000, perUnit: 18 },
-          { limit: 15000, perUnit: 22 },
-          { limit: 30000, perUnit: 26 },
-          { limit: 60000, perUnit: 30 },
-          { limit: Infinity, perUnit: 34 },
-        ],
-        POINT_VALUE: 208.4,          // 1점당 금액 (2025년)
-      },
+      BASIC_DEDUCTION: 10000,         // 기본공제 1억원 (만원 단위, 2024.02~)
+      // 재산등급별 점수 (60등급, 2022.09 부과체계 개편 이후, 기본공제 차감 후 금액 기준)
+      // limit: 등급 상한 (만원), score: 해당 등급 점수
+      PROPERTY_GRADE: [
+        { limit: 0,       score: 0 },
+        { limit: 450,     score: 22 },
+        { limit: 900,     score: 44 },
+        { limit: 1350,    score: 66 },
+        { limit: 1800,    score: 97 },
+        { limit: 2250,    score: 122 },
+        { limit: 2700,    score: 146 },
+        { limit: 3150,    score: 171 },
+        { limit: 3600,    score: 195 },
+        { limit: 4050,    score: 219 },
+        { limit: 4500,    score: 244 },
+        { limit: 5020,    score: 268 },
+        { limit: 5590,    score: 294 },
+        { limit: 6220,    score: 320 },
+        { limit: 6930,    score: 344 },
+        { limit: 7710,    score: 365 },
+        { limit: 8590,    score: 386 },
+        { limit: 9570,    score: 412 },
+        { limit: 10700,   score: 439 },
+        { limit: 11900,   score: 465 },
+        { limit: 13300,   score: 490 },
+        { limit: 14800,   score: 516 },
+        { limit: 16400,   score: 535 },
+        { limit: 18300,   score: 559 },
+        { limit: 20400,   score: 586 },
+        { limit: 22700,   score: 611 },
+        { limit: 25300,   score: 637 },
+        { limit: 28100,   score: 659 },
+        { limit: 31300,   score: 681 },
+        { limit: 34900,   score: 706 },
+        { limit: 38800,   score: 731 },
+        { limit: 43200,   score: 757 },
+        { limit: 48100,   score: 785 },
+        { limit: 53600,   score: 812 },
+        { limit: 59700,   score: 841 },
+        { limit: 66500,   score: 881 },
+        { limit: 74000,   score: 921 },
+        { limit: 82400,   score: 961 },
+        { limit: 91800,   score: 1001 },
+        { limit: 103000,  score: 1041 },
+        { limit: 114000,  score: 1091 },
+        { limit: 127000,  score: 1141 },
+        { limit: 142000,  score: 1191 },
+        { limit: 158000,  score: 1241 },
+        { limit: 176000,  score: 1291 },
+        { limit: 196000,  score: 1341 },
+        { limit: 218000,  score: 1391 },
+        { limit: 242000,  score: 1451 },
+        { limit: 270000,  score: 1511 },
+        { limit: 300000,  score: 1571 },
+        { limit: 330000,  score: 1641 },
+        { limit: 363000,  score: 1711 },
+        { limit: 399300,  score: 1781 },
+        { limit: 439230,  score: 1851 },
+        { limit: 483153,  score: 1921 },
+        { limit: 531468,  score: 1991 },
+        { limit: 584615,  score: 2061 },
+        { limit: 643077,  score: 2131 },
+        { limit: 707385,  score: 2201 },
+        { limit: 778124,  score: 2271 },
+        { limit: Infinity, score: 2341 },
+      ],
+      POINT_VALUE: 208.4,            // 1점당 금액 (2025년 기준, 2026년 211.5원)
       CAR_SCORE: {
         // 자동차 배기량/가액별 점수 (간소화)
         UNDER_1600: 0,               // 1600cc 미만/4천만 미만 면제
