@@ -19,9 +19,9 @@ const CONSTANTS = {
 
     // 급여산식 계수 (소득대체율)
     // 1988~1998: 70%, 1999~2007: 60%, 2008~ 매년 0.5%p 감소
-    // 2025년 기준 약 43%→ 2026년 42.5%
-    REPLACEMENT_RATE_2025: 0.43,
-    REPLACEMENT_RATE_2026: 0.425,
+    // 2025년 기준 41.5%, 2026년 41%
+    REPLACEMENT_RATE_2025: 0.415,
+    REPLACEMENT_RATE_2026: 0.41,
     REPLACEMENT_RATE_YEARLY_DECREASE: 0.005,
 
     // 조기수령 감액률 (연 6%, 월 0.5%)

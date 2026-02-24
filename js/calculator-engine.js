@@ -42,7 +42,7 @@ const CalcEngine = {
       // 소득대체율 적용 (연도별 변동이나 간단화)
       const rate = NP.REPLACEMENT_RATE_2025;
 
-      // 기본연금액 산식: rate × (A + B) × (1 + 0.05 × (n - 20)) / 12
+      // 기본연금액 산식: (rate / 4) × (A + B) × (1 + 0.05 × (n - 20))
       // 20년 기준, 초과분에 5%씩 추가
       let factor;
       if (years <= 20) {
@@ -51,7 +51,7 @@ const CalcEngine = {
         factor = 1 + 0.05 * (years - 20);
       }
 
-      const basicPension = rate * (A + B) * factor;
+      const basicPension = (rate / 4) * (A + B) * factor;
       return Math.round(basicPension);
     },
 
