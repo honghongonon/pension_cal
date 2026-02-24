@@ -234,6 +234,32 @@
                 <canvas id="asChart"></canvas>
               </div>
             </div>
+
+            <!-- 아버님 피드백 반영: 연령별 상세 자산 흐름표 -->
+            <div class="card fade-in">
+              <h2 class="card-title"><span class="card-icon">📋</span>연령별 자산 흐름 상세 (물가반영)</h2>
+              <p style="color: var(--text-light); margin-bottom: 16px;">국민연금과 생활비가 물가상승률에 따라 동반 상승하는 것을 반영한 상세 수치입니다.</p>
+              <div class="table-responsive">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th style="text-align: center;">나이</th>
+                      <th>월 생활비</th>
+                      <th>월 국민연금</th>
+                      <th>월 부족액</th>
+                      <th style="color: var(--primary);">남는 자산</th>
+                    </tr>
+                  </thead>
+                  <tbody id="as-timeline-body">
+                    <!-- 스크립트에서 생성 -->
+                  </tbody>
+                </table>
+              </div>
+              <div class="info-box info" style="margin-top: 16px;">
+                <span class="icon">💡</span>
+                <div>국민연금은 법적으로 매년 물가상승률만큼 인상되어 실질 가치가 보전됩니다. 위 표는 이 인상분까지 포함하여 계산된 결과입니다.</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -462,14 +488,50 @@
 
         const gap = result.totalMonthly - monthlyExpense;
 
-        // 소진 시점
-        let depletionAge = endAge;
-        for (const item of result.assetTimeline) {
-          if (item.balance <= 0) { depletionAge = item.age; break; }
+        // 아버님 피드백 반영: 상세 타임라인 데이터 생성
+        let currentBalance = totalAssets;
+        const timelineData = [];
+        let firstDepletionAge = null;
+
+        for (let y = 0; y <= (endAge - retireAge); y++) {
+          const age = retireAge + y;
+          const currentExp = monthlyExpense * Math.pow(1 + inflation, y);
+          const currentPen = monthlyPension * Math.pow(1 + inflation, y);
+          const currentGap = currentExp - currentPen;
+
+          if (y > 0) {
+            currentBalance = currentBalance * (1 + returnRate) - (currentGap * 12);
+          }
+          if (currentBalance < 0) {
+            currentBalance = 0;
+            if (firstDepletionAge === null) firstDepletionAge = age;
+          }
+
+          if (y % 5 === 0 || age === endAge) {
+            timelineData.push({
+              age,
+              expense: Math.round(currentExp),
+              pension: Math.round(currentPen),
+              gap: Math.round(currentGap),
+              balance: Math.max(0, Math.round(currentBalance))
+            });
+          }
         }
 
         document.getElementById('as-empty').style.display = 'none';
         document.getElementById('as-result').style.display = '';
+
+        // 표 업데이트
+        const tbody = document.getElementById('as-timeline-body');
+        tbody.innerHTML = timelineData.map(d => `
+          <tr>
+            <td style="text-align: center; font-weight: bold;">${d.age}세</td>
+            <td>${APP.format.manwon(d.expense)}</td>
+            <td style="color: var(--secondary);">${APP.format.manwon(d.pension)}</td>
+            <td style="color: var(--danger);">${APP.format.manwon(d.gap)}</td>
+            <td style="font-weight: 800; color: var(--primary);">${APP.format.manwon(d.balance)}</td>
+          </tr>
+        `).join('');
 
         document.getElementById('as-from-asset').textContent = APP.format.manwon(result.monthlyFromAssets);
         document.getElementById('as-pension').textContent = APP.format.manwon(monthlyPension);
@@ -485,7 +547,8 @@
         }
 
         const statusBox = document.getElementById('as-status-box');
-        if (depletionAge >= endAge) {
+        const finalDepletionAge = firstDepletionAge || endAge;
+        if (finalDepletionAge >= endAge) {
           statusBox.className = 'info-box success fade-in';
           document.getElementById('as-status-icon').textContent = '✅';
           document.getElementById('as-status-text').innerHTML =
@@ -494,7 +557,7 @@
           statusBox.className = 'info-box danger fade-in';
           document.getElementById('as-status-icon').textContent = '⚠️';
           document.getElementById('as-status-text').innerHTML =
-            `<strong>${depletionAge}세에 자산이 소진됩니다.</strong> 생활비를 줄이거나 추가 소득원이 필요합니다.`;
+            `<strong>${finalDepletionAge}세에 자산이 소진됩니다.</strong> 생활비를 줄이거나 추가 소득원이 필요합니다.`;
         }
 
         // 차트
@@ -523,7 +586,7 @@
           },
           options: {
             plugins: {
-              title: { display: true, text: '보유 자산 추이', font: { size: 16 } }
+              title: { display: true, text: '보유 자산 추이 (물가반영)', font: { size: 16 } }
             },
             scales: {
               y: { title: { display: true, text: '만원' }, beginAtZero: true }
