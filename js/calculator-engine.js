@@ -166,10 +166,11 @@ const CalcEngine = {
      * IRP 세액공제 효과 계산
      * @param {number} pensionSaving - 연금저축 납입액
      * @param {number} irpAmount - IRP 납입액
-     * @param {number} totalSalary - 총급여
+     * @param {number} income - 소득금액
+     * @param {boolean} isSalary - 근로소득(총급여) 여부
      * @returns {Object} { creditAmount, effectiveRate }
      */
-    calcIRPTaxCredit(pensionSaving, irpAmount, totalSalary) {
+    calcIRPTaxCredit(pensionSaving, irpAmount, income, isSalary = true) {
       const RP = CONSTANTS.RETIREMENT_PENSION;
 
       // 연금저축 한도 적용
@@ -177,8 +178,9 @@ const CalcEngine = {
       // 합산 한도 적용
       const totalDeductible = Math.min(effectivePensionSaving + irpAmount, RP.IRP_TAX_CREDIT_LIMIT);
 
-      // 세액공제율 결정
-      const rate = totalSalary <= RP.SALARY_THRESHOLD
+      // 세액공제율 결정 (근로소득 5,500만 vs 종합소득 4,500만)
+      const threshold = isSalary ? RP.SALARY_THRESHOLD : RP.INCOME_THRESHOLD;
+      const rate = income <= threshold
         ? RP.TAX_CREDIT_RATE_UNDER_5500
         : RP.TAX_CREDIT_RATE_OVER_5500;
 
@@ -197,7 +199,7 @@ const CalcEngine = {
     calcRetirementIncomeTax(retirementIncome, serviceYears) {
       const RP = CONSTANTS.RETIREMENT_PENSION;
 
-      // 1단계: 근속연수 공제
+      // 1단계: 근속연수 공제 (2023년 개정 기준)
       let serviceDeduction;
       if (serviceYears <= 5) {
         serviceDeduction = 1000000 * serviceYears;
@@ -206,7 +208,7 @@ const CalcEngine = {
       } else if (serviceYears <= 20) {
         serviceDeduction = 15000000 + 2500000 * (serviceYears - 10);
       } else {
-        serviceDeduction = 40000000 + 3000000 * (serviceYears - 20);
+        serviceDeduction = 43000000 + 3000000 * (serviceYears - 20);
       }
 
       // 2단계: 환산급여
@@ -478,13 +480,10 @@ const CalcEngine = {
       }
       const propertyPremium = Math.round(propertyScore * RG.POINT_VALUE);
 
-      // 3. 자동차 부분 (4천만원 미만/1600cc 미만 면제)
+      // 3. 자동차 부분 (2024.02부로 전면 폐지)
       let carPremium = 0;
-      if (carValue >= 4000 && carCC >= 1600) {
-        let carScore = carCC >= 3000 ? RG.CAR_SCORE.OVER_3000 : RG.CAR_SCORE.OVER_1600_UNDER_3000;
-        carPremium = Math.round(carScore * RG.POINT_VALUE);
-      }
-
+      // 이전 로직: carValue >= 4000 && carCC >= 1600 인 경우 부과했으나 현재는 0
+      
       // 월 건강보험료 합계
       const monthlyPremium = incomePremium + propertyPremium + carPremium;
 
