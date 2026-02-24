@@ -139,7 +139,9 @@
             <div class="value" id="dash-total-pension">-</div>
           </div>
           <div class="result-mini">
-            <div class="label">소득대체율</div>
+            <div class="label">소득대체율
+              <span class="tooltip-trigger" data-tooltip="현역 시절 소득 대비 연금 수령액의 비율입니다.">?</span>
+            </div>
             <div class="value" id="dash-replacement-rate">-</div>
           </div>
           <div class="result-mini">
@@ -231,27 +233,18 @@
         const monthlyExpense = Number(form.monthlyExpense.value.replace(/[^0-9]/g, '')) * 10000 || 2500000;
         const totalAssets = Number(form.totalAssets.value.replace(/[^0-9]/g, '')) * 10000 || 500000000;
 
-        // 국민연금 계산
+        // 1. 기초 수치 계산
         const nationalPension = CalcEngine.nationalPension.calcBasicPension(
           monthlyIncome, enrollYears * 12
         );
         const startAge = CalcEngine.nationalPension.getStartAge(birthYear);
-
-        // 퇴직금 (입력값 그대로)
-        const retireAmount = retirementPay;
-
-        // 노후 필요자금 설정
+        const totalIn = nationalPension + extraIncome;
+        const replacementRate = monthlyIncome > 0 ? totalIn / monthlyIncome : 0;
+        const gap = monthlyExpense - totalIn;
         const retireAge = startAge;
         const endAge = CONSTANTS.RETIREMENT_FUND.DEFAULT_LIFE_EXPECTANCY;
-        
-        // 건강보험료 (연소득 기준으로 간이 계산)
-        const annualIncome = nationalPension * 12;
-        const healthIns = CalcEngine.healthInsurance.calcRegionalPremium(annualIncome, 0, 0, 0);
 
-        // 소득대체율
-        const replacementRate = monthlyIncome > 0 ? nationalPension / monthlyIncome : 0;
-
-        // 자산 소진 시점 직접 시뮬레이션 (사용자 희망 생활비 기준)
+        // 2. 자산 소진 시뮬레이션
         let currentBalance = totalAssets + retirementPay;
         const monthlyReturn = CONSTANTS.RETIREMENT_FUND.DEFAULT_RETURN_RATE / 12;
         const monthlyInflation = CONSTANTS.RETIREMENT_FUND.DEFAULT_INFLATION / 12;
@@ -260,9 +253,7 @@
         let foundDepletion = false;
 
         for (let m = 0; m < (endAge - retireAge) * 12; m++) {
-          // 부족분 = 희망생활비 - (국민연금 + 추가소득)
-          const totalMonthlyPensions = nationalPension + extraIncome;
-          const withdrawal = (monthlyExpense - totalMonthlyPensions) * Math.pow(1 + monthlyInflation, m);
+          const withdrawal = (monthlyExpense - totalIn) * Math.pow(1 + monthlyInflation, m);
           currentBalance = currentBalance * (1 + monthlyReturn) - Math.max(withdrawal, 0);
           
           if (currentBalance <= 0 && !foundDepletion) {
@@ -279,17 +270,16 @@
           }
         }
 
-        const assetInfo = { assetTimeline };
+        // 3. 건강보험료 등 기타 계산
+        const annualIncome = nationalPension * 12;
+        const healthIns = CalcEngine.healthInsurance.calcRegionalPremium(annualIncome, 0, 0, 0);
 
-        // UI 업데이트
+        // 4. UI 업데이트
         document.getElementById('summary-cards').style.display = '';
         document.getElementById('dashboard-analysis').style.display = '';
 
         document.getElementById('sum-national').textContent = `월 ${APP.format.manwon(nationalPension)}`;
-        document.getElementById('sum-retirement').textContent = APP.format.manwon(retireAmount);
-        
-        const totalIn = nationalPension + extraIncome;
-        const gap = monthlyExpense - totalIn;
+        document.getElementById('sum-retirement').textContent = APP.format.manwon(retirementPay);
         document.getElementById('sum-gap').textContent = gap > 0 ? `월 -${APP.format.manwon(gap)}` : '충분';
         document.getElementById('sum-health').textContent = `월 ${APP.format.won(healthIns.total)}`;
 
@@ -298,12 +288,12 @@
         document.getElementById('dash-income-gap').textContent = gap > 0 ? `-${APP.format.manwon(gap)}/월` : '충분';
         document.getElementById('dash-depletion').textContent = !foundDepletion ? `${endAge}세 이후` : `${depletionAge}세`;
 
-        // 차트는 display:none→visible 후 브라우저 리플로우를 기다려야 캔버스 크기가 잡힘
+        // 5. 차트 렌더링
         requestAnimationFrame(() => {
-          this.renderCharts(totalIn, monthlyExpense, retireAge, endAge, assetInfo, totalAssets + retirementPay);
+          this.renderCharts(totalIn, monthlyExpense, retireAge, endAge, { assetTimeline }, totalAssets + retirementPay);
         });
 
-        // 데이터 저장
+        // 6. 데이터 저장
         APP.storage.save('dashboard', {
           birthYear, monthlyIncome: monthlyIncome / 10000, 
           extraIncome: extraIncome / 10000,
@@ -356,7 +346,11 @@
           },
           options: {
             plugins: {
-              title: { display: true, text: '연금수령액 vs 필요생활비 (연간)', font: { size: 16 } }
+              title: { 
+                display: true, 
+                text: '연금수령액 vs 필요생활비 (연간, 물가상승률 2.5% 반영)', 
+                font: { size: 16 } 
+              }
             },
             scales: {
               y: { title: { display: true, text: '만원' } }
@@ -392,7 +386,11 @@
           },
           options: {
             plugins: {
-              title: { display: true, text: `월 생활비 ${APP.format.manwon(expense)} 충당 구조`, font: { size: 14 } }
+              title: { 
+                display: true, 
+                text: `월 생활비 ${APP.format.manwon(expense)} 충당 구조 (물가상승 반영)`, 
+                font: { size: 14 } 
+              }
             }
           }
         });
@@ -416,7 +414,11 @@
           },
           options: {
             plugins: {
-              title: { display: true, text: '보유자산 소진 추이', font: { size: 14 } }
+              title: { 
+                display: true, 
+                text: '보유자산 소진 추이 (투자수익 4%, 물가 2.5%)', 
+                font: { size: 14 } 
+              }
             },
             scales: {
               y: {
