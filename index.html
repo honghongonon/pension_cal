@@ -249,9 +249,9 @@
         // 월 소득 갭
         const incomeGap = monthlyExpense - nationalPension;
 
-        // 자산 소진 시점
+        // 자산 소진 시점 (보유자산 + 퇴직금 합산)
         const assetInfo = CalcEngine.retirementFund.calcAvailableMonthly(
-          totalAssets, nationalPension, retireAge, endAge,
+          totalAssets + retirementPay, nationalPension, retireAge, endAge,
           CONSTANTS.RETIREMENT_FUND.DEFAULT_RETURN_RATE,
           CONSTANTS.RETIREMENT_FUND.DEFAULT_INFLATION
         );
@@ -298,9 +298,14 @@
         const pensionData = [];
         const expenseData = [];
         for (let age = retireAge; age <= endAge; age++) {
+          const yearDiff = age - retireAge;
           ages.push(age + '세');
-          pensionData.push(Math.round(pension * 12 / 10000));
-          const adjustedExpense = expense * 12 * Math.pow(1.025, age - retireAge);
+          
+          // 국민연금도 물가상승률만큼 매년 인상됨
+          const adjustedPension = pension * 12 * Math.pow(1 + CONSTANTS.RETIREMENT_FUND.DEFAULT_INFLATION, yearDiff);
+          pensionData.push(Math.round(adjustedPension / 10000));
+          
+          const adjustedExpense = expense * 12 * Math.pow(1 + CONSTANTS.RETIREMENT_FUND.DEFAULT_INFLATION, yearDiff);
           expenseData.push(Math.round(adjustedExpense / 10000));
         }
 
