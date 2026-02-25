@@ -147,7 +147,7 @@
               </div>
             </div>
 
-            <div class="card fade-in">
+            <div class="card fade-in" id="sim-table-card">
               <h2 class="card-title"><span class="card-icon">📋</span>연도별 상세</h2>
               <div class="table-responsive">
                 <table class="data-table" id="sim-table">
@@ -507,7 +507,10 @@
         document.querySelector('#sim-table tbody').innerHTML = tableRows.join('');
 
         APP.storage.saveForm('ppSimForm');
-        requestAnimationFrame(() => APP.button.reset(calcBtn));
+        requestAnimationFrame(() => {
+          APP.button.reset(calcBtn);
+          APP.table.makeCollapsible('#sim-table-card');
+        });
       },
 
       calcISA() {

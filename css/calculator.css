@@ -341,27 +341,70 @@
 @media (max-width: 768px) {
   .calc-layout {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
 
   .calc-input-panel {
     position: static;
   }
 
-  .scenario-cards {
-    grid-template-columns: 1fr 1fr;
+  .input-section {
+    margin-bottom: 16px;
+    padding-bottom: 14px;
   }
 
-  .compare-vs {
-    width: 36px; height: 36px;
+  .input-section-title {
     font-size: var(--font-sm);
+    margin-bottom: 12px;
+  }
+
+  .scenario-cards {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .scenario-card {
+    padding: 14px;
+  }
+
+  .scenario-card .scenario-value {
+    font-size: var(--font-xl);
+  }
+
+  .scenario-card .scenario-desc {
+    font-size: 12px;
   }
 
   .result-mini-grid {
     grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .result-mini {
+    padding: 14px;
+  }
+
+  .result-mini .value {
+    font-size: var(--font-xl);
+  }
+
+  .result-banner {
+    padding: 20px;
+    margin-bottom: 16px;
   }
 
   .result-banner .amount {
     font-size: var(--font-2xl);
+  }
+
+  .result-banner .label {
+    font-size: var(--font-sm);
+  }
+
+  .compare-card {
+    padding: 16px;
   }
 
   .option-group {
@@ -375,17 +418,105 @@
 
   .form-inline .form-group {
     width: 100%;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
+  }
+
+  .empty-result {
+    padding: 36px 16px;
+  }
+
+  .empty-result .icon {
+    font-size: 48px;
+    margin-bottom: 10px;
+  }
+
+  .calc-process {
+    padding: 14px;
+    margin: 10px 0;
+  }
+
+  .calc-process-step {
+    gap: 8px;
+    padding: 6px 0;
   }
 }
 
 @media (max-width: 480px) {
   .result-mini-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .result-mini {
+    padding: 10px;
+  }
+
+  .result-mini .label {
+    font-size: var(--font-sm);
+    margin-bottom: 4px;
+  }
+
+  .result-mini .value {
+    font-size: var(--font-lg);
   }
 
   .scenario-cards {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .scenario-card {
+    padding: 10px;
+  }
+
+  .scenario-card .scenario-value {
+    font-size: var(--font-lg);
+  }
+
+  .result-banner {
+    padding: 16px;
+    margin-bottom: 12px;
+    border-radius: var(--radius-sm);
+  }
+
+  .result-banner .amount {
+    font-size: var(--font-xl);
+  }
+
+  .compare-card {
+    padding: 14px;
+  }
+
+  .empty-result {
+    padding: 28px 14px;
+  }
+
+  .empty-result .icon {
+    font-size: 40px;
+  }
+
+  .empty-result .text {
+    font-size: var(--font-base);
+  }
+
+  .calc-layout {
+    gap: 12px;
+  }
+
+  .input-section {
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+  }
+
+  .calc-process-step .step-num {
+    width: 22px;
+    height: 22px;
+    font-size: 11px;
+  }
+
+  .calc-process-step .step-formula {
+    font-size: 12px;
+    padding: 2px 6px;
   }
 }
 

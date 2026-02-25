@@ -237,7 +237,7 @@
             </div>
 
             <!-- 아버님 피드백 반영: 연령별 상세 자산 흐름표 -->
-            <div class="card fade-in">
+            <div class="card fade-in" id="as-timeline-card">
               <h2 class="card-title"><span class="card-icon">📋</span>연령별 자산 흐름 상세 (물가반영)</h2>
               <p class="card-desc">국민연금과 생활비가 물가상승률에 따라 동반 상승하는 것을 반영한 상세 수치입니다.</p>
               <div class="table-responsive">
@@ -604,7 +604,10 @@
         });
 
         APP.storage.saveForm('rfAssetForm');
-        requestAnimationFrame(() => APP.button.reset(calcBtn));
+        requestAnimationFrame(() => {
+          APP.button.reset(calcBtn);
+          APP.table.makeCollapsible('#as-timeline-card');
+        });
       },
 
       calcWithdraw() {

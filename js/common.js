@@ -420,6 +420,31 @@ const APP = {
   },
 
   // ============================================
+  // 테이블 접기/펼치기 (모바일)
+  // ============================================
+  table: {
+    /** 긴 테이블을 접기 가능하게 만들기. 모바일에서만 동작 */
+    makeCollapsible(wrapperSelector) {
+      const wrapper = document.querySelector(wrapperSelector);
+      if (!wrapper) return;
+      const tableEl = wrapper.querySelector('.table-responsive') || wrapper;
+
+      // 이미 적용되었으면 스킵
+      if (tableEl.classList.contains('table-collapsible')) return;
+
+      tableEl.classList.add('table-collapsible');
+      const btn = document.createElement('button');
+      btn.className = 'table-toggle-btn';
+      btn.textContent = '더보기 ▼';
+      btn.addEventListener('click', () => {
+        const expanded = tableEl.classList.toggle('expanded');
+        btn.textContent = expanded ? '접기 ▲' : '더보기 ▼';
+      });
+      tableEl.parentElement.insertBefore(btn, tableEl.nextSibling);
+    },
+  },
+
+  // ============================================
   // 초기화
   // ============================================
   init() {
@@ -429,11 +454,12 @@ const APP = {
     this.tooltip.init();
     this.disclaimer.render();
 
-    // 링크 클릭 시 모바일 네비 닫기
+    // 모바일 네비 닫기: 바깥 클릭 또는 메뉴 아이템 클릭
     document.addEventListener('click', (e) => {
-      if (!e.target.closest('#main-nav')) {
-        const links = document.querySelector('.nav-links');
-        if (links) links.classList.remove('open');
+      const links = document.querySelector('.nav-links');
+      if (!links) return;
+      if (e.target.closest('.nav-item') || !e.target.closest('#main-nav')) {
+        links.classList.remove('open');
       }
     });
   },

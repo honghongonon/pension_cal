@@ -925,6 +925,51 @@ a.summary-card { text-decoration: none; }
 .data-table .row-warning { background: var(--danger-alpha); }
 
 /* ============================================
+   테이블 접기/펼치기 (모바일)
+   ============================================ */
+.table-collapsible {
+  position: relative;
+  max-height: 320px;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.table-collapsible.expanded {
+  max-height: none;
+}
+
+.table-collapsible:not(.expanded)::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: linear-gradient(to bottom, transparent, var(--bg-white));
+  pointer-events: none;
+}
+
+.table-toggle-btn {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-sm);
+  font-weight: 600;
+  color: var(--primary);
+  cursor: pointer;
+  text-align: center;
+  margin-top: 8px;
+  transition: background 0.2s;
+}
+
+.table-toggle-btn:hover {
+  background: var(--primary-alpha);
+}
+
+/* ============================================
    애니메이션
    ============================================ */
 .fade-in {
@@ -958,6 +1003,15 @@ a.summary-card { text-decoration: none; }
     margin-left: auto;
   }
 
+  .nav-links-wrap {
+    position: static;
+    overflow: visible;
+  }
+
+  .nav-links-wrap::after {
+    display: none;
+  }
+
   .nav-links {
     display: none;
     position: absolute;
@@ -969,6 +1023,7 @@ a.summary-card { text-decoration: none; }
     padding: 8px;
     border-bottom: 2px solid var(--border);
     box-shadow: var(--shadow);
+    z-index: 999;
   }
 
   .nav-links.open {
@@ -981,31 +1036,80 @@ a.summary-card { text-decoration: none; }
   }
 
   .container {
-    padding: 16px;
+    padding: 14px;
+  }
+
+  .page-header {
+    margin-bottom: 20px;
   }
 
   .page-title {
     font-size: var(--font-xl);
   }
 
+  .page-subtitle {
+    font-size: var(--font-base);
+  }
+
   .grid-2, .grid-3 {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
 
   .grid-4 {
     grid-template-columns: 1fr 1fr;
+    gap: 14px;
   }
 
   .compare-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .compare-vs {
     margin: 0 auto;
+    width: 36px;
+    height: 36px;
+    font-size: var(--font-sm);
   }
 
   .card {
-    padding: 20px;
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+
+  .card-title {
+    font-size: var(--font-lg);
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+  }
+
+  .info-box {
+    padding: 12px 14px;
+    margin-bottom: 14px;
+    font-size: var(--font-sm);
+    line-height: 1.5;
+  }
+
+  .info-box .icon {
+    font-size: 20px;
+  }
+
+  .form-group {
+    margin-bottom: 14px;
+  }
+
+  .summary-card {
+    padding: 16px;
+  }
+
+  .summary-card .icon {
+    font-size: 36px;
+    margin-bottom: 8px;
+  }
+
+  .summary-card .value {
+    font-size: var(--font-xl);
   }
 
   .result-main {
@@ -1013,7 +1117,61 @@ a.summary-card { text-decoration: none; }
   }
 
   .chart-container {
+    height: 260px;
+    margin: 14px 0;
+  }
+
+  .chart-container.tall {
     height: 280px;
+  }
+
+  .section-heading {
+    margin: 20px 0 14px;
+  }
+
+  .tabs {
+    gap: 2px;
+    margin-bottom: 16px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab-btn {
+    padding: 10px 14px;
+    font-size: var(--font-sm);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .form-range-container {
+    gap: 8px;
+  }
+
+  .range-value {
+    font-size: var(--font-base);
+    min-width: 48px;
+  }
+
+  .result-row {
+    padding: 8px 0;
+  }
+
+  .result-row .label {
+    font-size: var(--font-sm);
+  }
+
+  .result-row .value {
+    font-size: var(--font-base);
+  }
+
+  .disclaimer {
+    padding: 16px;
+    font-size: 12px;
   }
 }
 
@@ -1025,6 +1183,7 @@ a.summary-card { text-decoration: none; }
 
   .grid-4 {
     grid-template-columns: 1fr;
+    gap: 10px;
   }
 
   .brand-text {
@@ -1032,12 +1191,48 @@ a.summary-card { text-decoration: none; }
   }
 
   .container {
-    padding: 12px;
+    padding: 10px;
+  }
+
+  .page-header {
+    margin-bottom: 14px;
   }
 
   .card {
-    padding: 16px;
-    margin-bottom: 16px;
+    padding: 14px;
+    margin-bottom: 12px;
+    border-radius: var(--radius-sm);
+  }
+
+  .card-title {
+    font-size: var(--font-base);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+  }
+
+  .info-box {
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    gap: 8px;
+  }
+
+  .info-box .icon {
+    font-size: 18px;
+  }
+
+  .form-group {
+    margin-bottom: 12px;
+  }
+
+  .form-input, .form-select {
+    min-height: 42px;
+    padding: 10px 12px;
+    font-size: var(--font-base);
+  }
+
+  .input-suffix {
+    padding: 0 10px;
+    font-size: var(--font-sm);
   }
 
   .btn {
@@ -1045,12 +1240,73 @@ a.summary-card { text-decoration: none; }
     padding: 10px 20px;
   }
 
+  .btn-lg {
+    min-height: 48px;
+    padding: 12px 24px;
+    font-size: var(--font-lg);
+  }
+
   .btn-group {
     flex-direction: column;
   }
 
+  .summary-card {
+    padding: 14px;
+  }
+
   .summary-card .icon {
-    font-size: 36px;
+    font-size: 32px;
+    margin-bottom: 6px;
+  }
+
+  .summary-card .title {
+    font-size: var(--font-base);
+  }
+
+  .summary-card .desc {
+    font-size: 12px;
+  }
+
+  .chart-container {
+    height: 220px;
+    margin: 10px 0;
+  }
+
+  .chart-container.tall {
+    height: 240px;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 10px 8px;
+    font-size: var(--font-sm);
+  }
+
+  .section-heading {
+    font-size: var(--font-lg);
+    margin: 16px 0 10px;
+  }
+
+  .tab-btn {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .tabs {
+    margin-bottom: 12px;
+  }
+
+  .form-label {
+    font-size: var(--font-sm);
+    margin-bottom: 6px;
+  }
+
+  .form-help {
+    font-size: 12px;
+  }
+
+  .table-collapsible {
+    max-height: 260px;
   }
 }
 
