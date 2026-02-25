@@ -1,7 +1,25 @@
 {
   "permissions": {
     "allow": [
-      "WebSearch"
+      "WebSearch",
+      "Bash(cd:*)",
+      "Bash(node:*)",
+      "WebFetch(domain:easylaw.go.kr)",
+      "WebFetch(domain:www.hanultax.co.kr)",
+      "WebFetch(domain:www.rodemtax.com)",
+      "WebFetch(domain:yjm.yjm77331.com)",
+      "WebFetch(domain:antennagom.com)",
+      "WebFetch(domain:www.mohw.go.kr)",
+      "WebFetch(domain:info-poclain.com)",
+      "WebFetch(domain:www.nhis.or.kr)",
+      "WebFetch(domain:lbox.kr)",
+      "WebFetch(domain:glasswallet.com)",
+      "WebFetch(domain:help.3o3.co.kr)",
+      "WebFetch(domain:www.korea.kr)",
+      "WebFetch(domain:www.innno.co.kr)",
+      "Bash(wc:*)",
+      "Bash(find .:*)",
+      "WebFetch(domain:adsense-ko.googleblog.com)"
     ]
   }
 }
