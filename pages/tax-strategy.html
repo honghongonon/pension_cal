@@ -324,9 +324,10 @@
               <div class="info-box warning mt-sm">
                 <span class="icon">⚠️</span>
                 <div>
-                  <strong>사적연금 1,500만원 기준선:</strong>
+                  <strong>사적연금 1,500만원 기준선 (세금 절벽 주의):</strong>
                   1,500만원 이하는 저율 분리과세(3.3~5.5%)가 적용됩니다.
-                  초과 시 전액에 대해 15% 분리과세 또는 종합과세 중 선택해야 합니다.
+                  초과 시 <strong>초과분이 아닌 전액</strong>에 대해 15% 분리과세 또는 종합과세 중 선택해야 합니다.
+                  예: 1,500만원 → 세금 약 99만원, 1,600만원 → 약 264만원으로 급증합니다.
                 </div>
               </div>
             </div>
@@ -759,12 +760,44 @@
         const chartLabels = [];
         const chartSep = [];
         const chartComp = [];
+        const limitLine = [];
+        const limitIdx = 15; // 1,500만원 = index 15 (100만원 단위)
         for (let amount = 0; amount <= 40000000; amount += 1000000) {
           chartLabels.push(Math.round(amount / 10000) + '만');
           const c = CalcEngine.tax.comparePrivatePensionTax(amount, otherIncome, age);
           chartSep.push(Math.round((c.separate.totalTax) / 10000));
           chartComp.push(Math.round(c.comprehensive.additionalTax / 10000));
         }
+
+        // 1,500만원 경계선 (수직선 시뮬레이션)
+        const maxTax = Math.max(...chartSep, ...chartComp);
+        for (let i = 0; i <= 40; i++) {
+          limitLine.push(i === limitIdx ? maxTax : null);
+        }
+
+        // 1,500만원 수직 기준선 플러그인
+        const limitLinePlugin = {
+          id: 'limitLine',
+          afterDraw(chart) {
+            const xScale = chart.scales.x;
+            const yScale = chart.scales.y;
+            const ctx = chart.ctx;
+            const x = xScale.getPixelForValue(limitIdx);
+            ctx.save();
+            ctx.beginPath();
+            ctx.setLineDash([8, 4]);
+            ctx.strokeStyle = 'rgba(255, 193, 7, 0.8)';
+            ctx.lineWidth = 2;
+            ctx.moveTo(x, yScale.top);
+            ctx.lineTo(x, yScale.bottom);
+            ctx.stroke();
+            ctx.fillStyle = 'rgba(255, 193, 7, 0.9)';
+            ctx.font = 'bold 12px Pretendard Variable, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('1,500만원', x, yScale.top - 6);
+            ctx.restore();
+          }
+        };
 
         APP.chart.create('ptOptimalChart', {
           type: 'line',
@@ -776,7 +809,7 @@
                 data: chartSep,
                 borderColor: APP.chart.colors.primary,
                 backgroundColor: APP.chart.colors.primaryAlpha,
-                fill: false, tension: 0.3,
+                fill: false, tension: 0,
               },
               {
                 label: '종합과세 추가세금 (만원)',
@@ -790,14 +823,15 @@
           },
           options: {
             plugins: {
-              title: { display: true, text: '사적연금 수령액별 세금 비교', font: { size: 16 } },
-              annotation: undefined,
+              title: { display: true, text: '사적연금 수령액별 세금 비교 (1,500만원에서 세율 급변)', font: { size: 16 } },
             },
             scales: {
               x: { title: { display: true, text: '사적연금 연간 수령액' } },
               y: { title: { display: true, text: '세금 (만원)' }, beginAtZero: true }
-            }
-          }
+            },
+            layout: { padding: { top: 16 } }
+          },
+          plugins: [limitLinePlugin]
         });
 
         APP.storage.saveForm('taxPensionForm');
