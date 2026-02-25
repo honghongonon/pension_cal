@@ -158,6 +158,12 @@ body {
   padding: 8px;
 }
 
+.nav-toggle:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 .nav-toggle span {
   display: block;
   width: 24px;
@@ -1009,7 +1015,7 @@ a.summary-card { text-decoration: none; }
   }
 
   .nav-links-wrap::after {
-    display: none;
+    content: none;
   }
 
   .nav-links {
@@ -1022,12 +1028,18 @@ a.summary-card { text-decoration: none; }
     flex-direction: column;
     padding: 8px;
     border-bottom: 2px solid var(--border);
-    box-shadow: var(--shadow);
-    z-index: 999;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    z-index: 1001;
   }
 
   .nav-links.open {
     display: flex;
+    animation: navSlideDown 0.2s ease;
+  }
+
+  @keyframes navSlideDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   .nav-item {

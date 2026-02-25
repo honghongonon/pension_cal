@@ -81,7 +81,8 @@ const APP = {
 
     toggle() {
       const links = document.querySelector('.nav-links');
-      if (links) links.classList.toggle('open');
+      if (!links) return;
+      links.classList.toggle('open');
     },
   },
 
