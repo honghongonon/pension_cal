@@ -146,6 +146,22 @@ const APP = {
       });
     },
 
+    /** range 슬라이더 채움 트랙 초기화 */
+    initRangeFields() {
+      const updateFill = (range) => {
+        const min = Number(range.min) || 0;
+        const max = Number(range.max) || 100;
+        const val = Number(range.value) || 0;
+        const pct = ((val - min) / (max - min)) * 100;
+        range.style.backgroundSize = pct + '% 100%';
+      };
+
+      document.querySelectorAll('.form-range').forEach(range => {
+        updateFill(range);
+        range.addEventListener('input', () => updateFill(range));
+      });
+    },
+
     /** 금액 입력에서 숫자만 추출 */
     getMoneyValue(selector) {
       const el = document.querySelector(selector);
@@ -409,6 +425,7 @@ const APP = {
   init() {
     this.nav.render();
     this.input.initMoneyFields();
+    this.input.initRangeFields();
     this.tooltip.init();
     this.disclaimer.render();
 
