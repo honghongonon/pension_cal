@@ -71,7 +71,7 @@
                   </div>
                 </div>
 
-                <div id="dc-fields" style="display:none;">
+                <div id="dc-fields" class="hidden">
                   <div class="form-group">
                     <label class="form-label">연봉 <span class="unit">(만원)</span></label>
                     <div class="input-group">
@@ -112,7 +112,7 @@
             </div>
           </div>
 
-          <div id="rp-result" style="display:none;">
+          <div id="rp-result" class="hidden">
             <div class="result-banner fade-in">
               <div class="label">예상 퇴직금 (세전)</div>
               <div class="amount" id="rp-gross">-</div>
@@ -209,7 +209,7 @@
             </div>
           </div>
 
-          <div id="cmp-result" style="display:none;">
+          <div id="cmp-result" class="hidden">
             <div class="compare-grid fade-in">
               <div class="compare-card" id="cmp-lump">
                 <span class="badge blue">일시금 수령</span>
@@ -311,7 +311,7 @@
             </div>
           </div>
 
-          <div id="irp-result" style="display:none;">
+          <div id="irp-result" class="hidden">
             <div class="result-banner fade-in">
               <div class="label">예상 세액공제 환급액</div>
               <div class="amount" id="irp-credit">-</div>
@@ -388,12 +388,14 @@
       setType(el, type) {
         document.querySelectorAll('#rpForm .option-btn').forEach(b => b.classList.remove('active'));
         el.classList.add('active');
-        document.getElementById('db-fields').style.display = type === 'DB' ? '' : 'none';
-        document.getElementById('dc-fields').style.display = type === 'DC' ? '' : 'none';
+        document.getElementById('db-fields').classList.toggle('hidden', type !== 'DB');
+        document.getElementById('dc-fields').classList.toggle('hidden', type !== 'DC');
         APP.input.initMoneyFields();
       },
 
       calcRetirement() {
+        const calcBtn = document.querySelector('#rpForm .btn-primary');
+        APP.button.loading(calcBtn);
         const form = document.getElementById('rpForm');
         const type = form.querySelector('input[name="pensionType"]:checked').value;
         const serviceYears = Number(form.serviceYears.value) || 20;
@@ -412,8 +414,8 @@
         const taxResult = CalcEngine.retirementPension.calcRetirementIncomeTax(retirementIncome, serviceYears);
         const netAmount = retirementIncome - taxResult.totalTax;
 
-        document.getElementById('rp-empty').style.display = 'none';
-        document.getElementById('rp-result').style.display = '';
+        document.getElementById('rp-empty').classList.add('hidden');
+        document.getElementById('rp-result').classList.remove('hidden');
 
         document.getElementById('rp-gross').textContent = APP.format.manwon(retirementIncome);
         document.getElementById('rp-type-info').textContent = `${type}형, 근속 ${serviceYears}년`;
@@ -486,9 +488,12 @@
         });
 
         APP.storage.saveForm('rpForm');
+        requestAnimationFrame(() => APP.button.reset(calcBtn));
       },
 
       calcCompare() {
+        const calcBtn = document.querySelector('#rpCompareForm .btn-primary');
+        APP.button.loading(calcBtn);
         const form = document.getElementById('rpCompareForm');
         const retireAmount = Number(form.retireAmount.value.replace(/[^0-9]/g, '')) * 10000;
         const svcYears = Number(form.svcYears.value) || 20;
@@ -500,8 +505,8 @@
           retireAmount, svcYears, pensionYears, irpReturn, startAge
         );
 
-        document.getElementById('cmp-empty').style.display = 'none';
-        document.getElementById('cmp-result').style.display = '';
+        document.getElementById('cmp-empty').classList.add('hidden');
+        document.getElementById('cmp-result').classList.remove('hidden');
 
         // 일시금
         document.getElementById('cmp-l-gross').textContent = APP.format.manwon(result.lumpSum.gross);
@@ -562,9 +567,12 @@
             }
           }
         });
+        requestAnimationFrame(() => APP.button.reset(calcBtn));
       },
 
       calcIRP() {
+        const calcBtn = document.querySelector('#irpForm .btn-primary');
+        APP.button.loading(calcBtn);
         const form = document.getElementById('irpForm');
         const totalSalary = Number(form.totalSalary.value.replace(/[^0-9]/g, '')) * 10000;
         const pensionSaving = Number(form.pensionSaving.value.replace(/[^0-9]/g, '')) * 10000;
@@ -572,8 +580,8 @@
 
         const result = CalcEngine.retirementPension.calcIRPTaxCredit(pensionSaving, irpAmount, totalSalary);
 
-        document.getElementById('irp-empty').style.display = 'none';
-        document.getElementById('irp-result').style.display = '';
+        document.getElementById('irp-empty').classList.add('hidden');
+        document.getElementById('irp-result').classList.remove('hidden');
 
         document.getElementById('irp-credit').textContent = APP.format.manwon(result.creditAmount);
         document.getElementById('irp-rate-info').textContent =
@@ -589,6 +597,7 @@
         document.getElementById('irp-table-rate').textContent = APP.format.percent(result.rate);
         document.getElementById('irp-table-note').textContent =
           totalSalary <= 55000000 ? '총급여 5,500만원 이하' : '총급여 5,500만원 초과';
+        requestAnimationFrame(() => APP.button.reset(calcBtn));
       },
     };
 

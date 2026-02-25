@@ -113,7 +113,7 @@
             </div>
           </div>
 
-          <div id="sim-result" style="display:none;">
+          <div id="sim-result" class="hidden">
             <div class="result-banner fade-in">
               <div class="label">예상 적립금 (수령 시점)</div>
               <div class="amount" id="sim-total">-</div>
@@ -211,7 +211,7 @@
             </div>
           </div>
 
-          <div id="isa-result" style="display:none;">
+          <div id="isa-result" class="hidden">
             <div class="compare-grid fade-in">
               <div class="compare-card">
                 <span class="badge blue">ISA 그대로 유지</span>
@@ -311,7 +311,7 @@
             </div>
           </div>
 
-          <div id="wd-result" style="display:none;">
+          <div id="wd-result" class="hidden">
             <div class="result-mini-grid fade-in">
               <div class="result-mini">
                 <div class="label">연간 수령액</div>
@@ -359,7 +359,7 @@
                   </div>
                 </div>
               </div>
-              <div class="info-box success" style="margin-top:16px;">
+              <div class="info-box success mt-md">
                 <span class="icon">✅</span>
                 <div id="wd-recommend-text"></div>
               </div>
@@ -413,9 +413,13 @@
 
         const years = startAge - currentAge;
         if (years <= 0) {
-          alert('수령 시작 나이가 현재 나이보다 커야 합니다.');
+          APP.validate.showError(form.startAge, '수령 시작 나이가 현재 나이보다 커야 합니다.');
           return;
         }
+        APP.validate.clearError(form.startAge);
+
+        const calcBtn = document.querySelector('#ppSimForm .btn-primary');
+        APP.button.loading(calcBtn);
 
         const annualContrib = monthlyContrib * 12;
         // 세액공제 한도 적용
@@ -457,8 +461,8 @@
         const totalEarnings = balance - totalContrib;
         const realReturn = totalContrib > 0 ? (balance + totalTaxCredit - totalContrib) / totalContrib : 0;
 
-        document.getElementById('sim-empty').style.display = 'none';
-        document.getElementById('sim-result').style.display = '';
+        document.getElementById('sim-empty').classList.add('hidden');
+        document.getElementById('sim-result').classList.remove('hidden');
 
         document.getElementById('sim-total').textContent = APP.format.manwon(balance);
         document.getElementById('sim-info').textContent = `${currentAge}세 → ${startAge}세, ${years}년 적립, 수익률 ${(returnRate*100).toFixed(1)}%`;
@@ -502,9 +506,12 @@
         document.querySelector('#sim-table tbody').innerHTML = tableRows.join('');
 
         APP.storage.saveForm('ppSimForm');
+        requestAnimationFrame(() => APP.button.reset(calcBtn));
       },
 
       calcISA() {
+        const calcBtn = document.querySelector('#isaForm .btn-primary');
+        APP.button.loading(calcBtn);
         const form = document.getElementById('isaForm');
         const isaAmount = Number(form.isaAmount.value.replace(/[^0-9]/g, '')) * 10000;
         const isaProfit = Number(form.isaProfit.value.replace(/[^0-9]/g, '')) * 10000;
@@ -514,8 +521,8 @@
         const extraBase = Math.min(isaAmount * 0.1, 3000000); // 전환금의 10%, 최대 300만원
         const extraCredit = Math.round(extraBase * creditRate);
 
-        document.getElementById('isa-empty').style.display = 'none';
-        document.getElementById('isa-result').style.display = '';
+        document.getElementById('isa-empty').classList.add('hidden');
+        document.getElementById('isa-result').classList.remove('hidden');
 
         document.getElementById('isa-keep-amount').textContent = APP.format.manwon(isaAmount);
         document.getElementById('isa-keep-benefit').textContent = APP.format.manwon(isaProfit) + ' 비과세';
@@ -530,9 +537,12 @@
           `• 세액공제 환급: <strong>${APP.format.manwon(extraCredit)}</strong> (공제율 ${APP.format.percent(creditRate)})<br>` +
           `• 기존 비과세 혜택 ${APP.format.manwon(isaProfit)}도 그대로 유지됩니다.<br>` +
           `<strong>※ ISA 만기 후 60일 이내</strong>에 연금계좌로 전환해야 합니다.`;
+        requestAnimationFrame(() => APP.button.reset(calcBtn));
       },
 
       calcWithdraw() {
+        const calcBtn = document.querySelector('#ppWithdrawForm .btn-primary');
+        APP.button.loading(calcBtn);
         const form = document.getElementById('ppWithdrawForm');
         const totalBalance = Number(form.totalBalance.value.replace(/[^0-9]/g, '')) * 10000;
         const withdrawAge = Number(form.withdrawAge.value) || 55;
@@ -549,8 +559,8 @@
         // 분리과세 vs 종합과세 비교
         const taxComparison = CalcEngine.tax.comparePrivatePensionTax(annualWithdraw, otherIncome, withdrawAge);
 
-        document.getElementById('wd-empty').style.display = 'none';
-        document.getElementById('wd-result').style.display = '';
+        document.getElementById('wd-empty').classList.add('hidden');
+        document.getElementById('wd-result').classList.remove('hidden');
 
         document.getElementById('wd-annual').textContent = APP.format.manwon(annualWithdraw);
         document.getElementById('wd-years').textContent = withdrawYears + '년';
@@ -593,7 +603,7 @@
           const annualLimit = Math.round(limitBalance * 1.2 / divisor);
           const monthlyLimit = Math.round(annualLimit / 12);
           limitRows.push(`
-            <tr${annualWithdraw > annualLimit ? ' style="background:var(--danger-alpha);"' : ''}>
+            <tr${annualWithdraw > annualLimit ? ' class="row-warning"' : ''}>
               <td>${year}년차</td>
               <td>÷ ${divisor}</td>
               <td>${APP.format.manwon(annualLimit)}</td>
@@ -606,6 +616,7 @@
         document.getElementById('wd-limit-table').innerHTML = limitRows.join('');
 
         APP.storage.saveForm('ppWithdrawForm');
+        requestAnimationFrame(() => APP.button.reset(calcBtn));
       },
     };
 

@@ -140,7 +140,7 @@
             </div>
           </div>
 
-          <div id="it-result" style="display:none;">
+          <div id="it-result" class="hidden">
             <div class="result-banner fade-in">
               <div class="label">종합소득세 + 지방소득세</div>
               <div class="amount" id="it-total-tax">-</div>
@@ -263,7 +263,7 @@
             </div>
           </div>
 
-          <div id="pt-result" style="display:none;">
+          <div id="pt-result" class="hidden">
             <!-- 분리과세 vs 종합과세 비교 -->
             <div class="compare-grid fade-in">
               <div class="compare-card" id="pt-sep-card">
@@ -320,7 +320,7 @@
               <div class="chart-container tall">
                 <canvas id="ptOptimalChart"></canvas>
               </div>
-              <div class="info-box warning" style="margin-top:12px;">
+              <div class="info-box warning mt-sm">
                 <span class="icon">⚠️</span>
                 <div>
                   <strong>사적연금 1,500만원 기준선:</strong>
@@ -379,9 +379,9 @@
             </form>
 
             <!-- 근속연수별 비교 도구 -->
-            <div style="margin-top:20px; padding-top:20px; border-top:1px dashed var(--border);">
+            <div class="section-divider">
               <div class="input-section-title">근속연수별 세금 비교</div>
-              <p style="color:var(--text-light); font-size:var(--font-sm); margin-bottom:12px;">동일 퇴직금에 대해 근속연수가 세금에 미치는 영향을 비교합니다</p>
+              <p class="card-desc">동일 퇴직금에 대해 근속연수가 세금에 미치는 영향을 비교합니다</p>
               <button type="button" class="btn btn-outline btn-block" onclick="TaxStrategy.calcRetireCompare()">비교 차트 보기</button>
             </div>
           </div>
@@ -395,7 +395,7 @@
             </div>
           </div>
 
-          <div id="rt-result" style="display:none;">
+          <div id="rt-result" class="hidden">
             <div class="result-banner fade-in">
               <div class="label">퇴직소득세 + 지방소득세</div>
               <div class="amount" id="rt-total-tax">-</div>
@@ -452,21 +452,21 @@
                   <div class="value green" id="rt-saving">-</div>
                 </div>
               </div>
-              <div class="info-box info" style="margin-top:12px;">
+              <div class="info-box info mt-sm">
                 <span class="icon">📌</span>
-                <div>퇴직금을 IRP로 이전하여 연금으로 수령하면 퇴직소득세의 <strong>30~40%가 감면</strong>됩니다. 자세한 비교는 <a href="retirement-pension.html" style="color:var(--primary); font-weight:700;">퇴직연금 계산기</a>에서 확인하세요.</div>
+                <div>퇴직금을 IRP로 이전하여 연금으로 수령하면 퇴직소득세의 <strong>30~40%가 감면</strong>됩니다. 자세한 비교는 <a href="retirement-pension.html">퇴직연금 계산기</a>에서 확인하세요.</div>
               </div>
             </div>
           </div>
 
           <!-- 근속연수 비교 차트 (별도) -->
-          <div id="rt-compare" style="display:none;">
+          <div id="rt-compare" class="hidden">
             <div class="card fade-in">
               <h2 class="card-title"><span class="card-icon">📊</span>근속연수별 퇴직소득세 비교</h2>
               <div class="chart-container tall">
                 <canvas id="rtCompareChart"></canvas>
               </div>
-              <div class="info-box info" style="margin-top:12px;">
+              <div class="info-box info mt-sm">
                 <span class="icon">💡</span>
                 <div id="rt-compare-text"></div>
               </div>
@@ -496,6 +496,8 @@
       // 탭1: 종합소득세
       // ==========================================
       calcIncomeTax() {
+        const calcBtn = document.querySelector('#taxIncomeForm .btn-primary');
+        APP.button.loading(calcBtn);
         const form = document.getElementById('taxIncomeForm');
         const getVal = (name) => Number(form[name].value.replace(/[^0-9]/g, '')) * 10000;
 
@@ -554,8 +556,8 @@
         const effectiveRate = grossIncome > 0 ? finalTotalTax / grossIncome : 0;
 
         // UI 업데이트
-        document.getElementById('it-empty').style.display = 'none';
-        document.getElementById('it-result').style.display = '';
+        document.getElementById('it-empty').classList.add('hidden');
+        document.getElementById('it-result').classList.remove('hidden');
 
         document.getElementById('it-total-tax').textContent = APP.format.manwon(finalTotalTax);
         document.getElementById('it-effective').textContent = `실효세율 ${APP.format.percent(effectiveRate)}`;
@@ -683,7 +685,7 @@
           const prevL = i === 0 ? 0 : CONSTANTS.TAX.INCOME_TAX_BRACKETS[i - 1].limit;
           const isActive = taxableIncome > prevL && (i === 0 || taxableIncome > CONSTANTS.TAX.INCOME_TAX_BRACKETS[i - 1].limit);
           const isCurrent = taxableIncome <= b.limit && taxableIncome > prevL;
-          return `<tr${isCurrent ? ' style="background:var(--primary-alpha); font-weight:700;"' : ''}>
+          return `<tr${isCurrent ? ' class="row-active"' : ''}>
             <td>${b.limit === Infinity ? APP.format.number(prevL / 10000) + '만원 초과' : APP.format.number(prevL / 10000) + ' ~ ' + APP.format.number(b.limit / 10000) + '만원'}</td>
             <td>${(b.rate * 100)}%</td>
             <td>${APP.format.number(b.deduction / 10000)}만원</td>
@@ -693,12 +695,15 @@
         document.querySelector('#it-bracket-table tbody').innerHTML = tableBody;
 
         APP.storage.saveForm('taxIncomeForm');
+        requestAnimationFrame(() => APP.button.reset(calcBtn));
       },
 
       // ==========================================
       // 탭2: 연금소득 절세
       // ==========================================
       calcPensionTax() {
+        const calcBtn = document.querySelector('#taxPensionForm .btn-primary');
+        APP.button.loading(calcBtn);
         const form = document.getElementById('taxPensionForm');
         const getVal = (name) => Number(form[name].value.replace(/[^0-9]/g, '')) * 10000;
 
@@ -716,8 +721,8 @@
         const otherTaxable = Math.max(otherIncome - CalcEngine.tax.calcPensionDeduction(publicPension) - CONSTANTS.TAX.BASIC_DEDUCTION, 0);
         const otherTaxResult = CalcEngine.tax.calcIncomeTax(otherTaxable);
 
-        document.getElementById('pt-empty').style.display = 'none';
-        document.getElementById('pt-result').style.display = '';
+        document.getElementById('pt-empty').classList.add('hidden');
+        document.getElementById('pt-result').classList.remove('hidden');
 
         // 분리과세 카드
         document.getElementById('pt-sep-rate').textContent = APP.format.percent(comparison.separate.rate);
@@ -795,12 +800,15 @@
         });
 
         APP.storage.saveForm('taxPensionForm');
+        requestAnimationFrame(() => APP.button.reset(calcBtn));
       },
 
       // ==========================================
       // 탭3: 퇴직소득세
       // ==========================================
       calcRetireTax() {
+        const calcBtn = document.querySelector('#taxRetireForm .btn-primary');
+        APP.button.loading(calcBtn);
         const form = document.getElementById('taxRetireForm');
         const retireIncome = Number(form.retireIncome.value.replace(/[^0-9]/g, '')) * 10000;
         const serviceYears = Number(form.serviceYears.value) || 20;
@@ -808,8 +816,8 @@
         const tax = CalcEngine.retirementPension.calcRetirementIncomeTax(retireIncome, serviceYears);
         const netAmount = retireIncome - tax.totalTax;
 
-        document.getElementById('rt-empty').style.display = 'none';
-        document.getElementById('rt-result').style.display = '';
+        document.getElementById('rt-empty').classList.add('hidden');
+        document.getElementById('rt-result').classList.remove('hidden');
 
         document.getElementById('rt-total-tax').textContent = APP.format.manwon(tax.totalTax);
         document.getElementById('rt-effective').textContent = `실효세율 ${APP.format.percent(tax.effectiveRate)}, 근속 ${serviceYears}년`;
@@ -900,6 +908,7 @@
           : APP.format.manwon(Math.abs(pensionCompare.taxSaving));
 
         APP.storage.saveForm('taxRetireForm');
+        requestAnimationFrame(() => APP.button.reset(calcBtn));
       },
 
       calcRetireCompare() {
@@ -911,7 +920,7 @@
           return;
         }
 
-        document.getElementById('rt-compare').style.display = '';
+        document.getElementById('rt-compare').classList.remove('hidden');
 
         const labels = [];
         const taxes = [];

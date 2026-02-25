@@ -140,6 +140,10 @@
   margin-bottom: 24px;
 }
 
+.result-banner.success { background: linear-gradient(135deg, var(--secondary), #1a6b3a); }
+.result-banner.danger { background: linear-gradient(135deg, var(--danger), #a02030); }
+.result-banner.accent { background: linear-gradient(135deg, var(--accent), #c46d00); }
+
 .result-banner .label {
   font-size: var(--font-base);
   opacity: 0.9;
@@ -226,6 +230,10 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
+
+.scenario-label.primary { color: var(--primary); }
+.scenario-label.secondary { color: var(--secondary); }
+.scenario-label.accent { color: var(--accent); }
 
 .scenario-card .scenario-value {
   font-size: var(--font-2xl);
@@ -340,7 +348,12 @@
   }
 
   .scenario-cards {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .compare-vs {
+    width: 36px; height: 36px;
+    font-size: var(--font-sm);
   }
 
   .result-mini-grid {
@@ -370,4 +383,80 @@
   .result-mini-grid {
     grid-template-columns: 1fr;
   }
+
+  .scenario-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================
+   보조 클래스
+   ============================================ */
+.card-desc { color: var(--text-light); margin-bottom: 20px; }
+.form-btn-area { margin-top: 16px; text-align: center; }
+.section-divider { margin-top: 20px; padding-top: 20px; border-top: 1px dashed var(--border); }
+.form-help.highlight { color: var(--primary); margin-bottom: 10px; }
+.checklist-actions { margin-bottom: 16px; text-align: right; }
+
+/* ============================================
+   체크리스트 스타일
+   ============================================ */
+.checklist-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.checklist-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.2s;
+  border: 1px solid transparent;
+}
+.checklist-item:hover {
+  background: var(--primary-alpha);
+}
+.checklist-item input[type="checkbox"] {
+  display: none;
+}
+.check-box {
+  width: 26px;
+  height: 26px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  font-size: 16px;
+}
+.checklist-item input:checked ~ .check-box {
+  background: var(--secondary);
+  border-color: var(--secondary);
+}
+.checklist-item input:checked ~ .check-box::after {
+  content: '✓';
+  color: white;
+  font-weight: 700;
+}
+.checklist-item input:checked ~ div {
+  opacity: 0.5;
+}
+.checklist-item input:checked ~ div strong {
+  text-decoration: line-through;
+}
+.checklist-item div strong {
+  font-size: var(--font-base);
+  display: block;
+  margin-bottom: 2px;
+}
+.checklist-item div p {
+  font-size: var(--font-sm);
+  color: var(--text-light);
+  margin: 0;
 }

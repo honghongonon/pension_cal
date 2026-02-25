@@ -43,9 +43,31 @@ const APP = {
           <button class="nav-toggle" onclick="APP.nav.toggle()" aria-label="메뉴 열기">
             <span></span><span></span><span></span>
           </button>
-          <div class="nav-links">${navHTML}</div>
+          <div class="nav-links-wrap">
+            <div class="nav-links">${navHTML}</div>
+          </div>
         `;
+
+        // 스크롤 힌트 감지
+        this.checkOverflow();
       }
+    },
+
+    /** 네비게이션 가로 스크롤 힌트 */
+    checkOverflow() {
+      const wrap = document.querySelector('.nav-links-wrap');
+      const links = document.querySelector('.nav-links');
+      if (!wrap || !links) return;
+
+      const update = () => {
+        const hasMore = links.scrollWidth > links.clientWidth &&
+          links.scrollLeft + links.clientWidth < links.scrollWidth - 4;
+        wrap.classList.toggle('has-overflow', hasMore);
+      };
+
+      links.addEventListener('scroll', update);
+      window.addEventListener('resize', update);
+      update();
     },
 
     getBasePath() {
@@ -209,6 +231,10 @@ const APP = {
           const num = Number(String(value).replace(/[^0-9]/g, ''));
           if (num) el.value = num.toLocaleString('ko-KR');
         }
+        // range 슬라이더 복원 시 oninput 트리거
+        if (el.type === 'range') {
+          el.dispatchEvent(new Event('input'));
+        }
       });
     },
   },
@@ -303,6 +329,77 @@ const APP = {
           <p class="disclaimer-meta">데이터 기준: ${CONSTANTS.COMMON.DATA_YEAR} | 최종 업데이트: ${CONSTANTS.COMMON.LAST_UPDATED}</p>
         </div>
       `;
+    },
+  },
+
+  // ============================================
+  // 폼 유효성 검사
+  // ============================================
+  validate: {
+    showError(input, message) {
+      if (typeof input === 'string') input = document.querySelector(input);
+      if (!input) return;
+      input.classList.add('error');
+      let errEl = input.parentElement.querySelector('.form-error');
+      if (!errEl) {
+        errEl = document.createElement('div');
+        errEl.className = 'form-error';
+        input.parentElement.appendChild(errEl);
+      }
+      errEl.textContent = message;
+      errEl.classList.add('show');
+    },
+
+    clearError(input) {
+      if (typeof input === 'string') input = document.querySelector(input);
+      if (!input) return;
+      input.classList.remove('error');
+      const errEl = input.parentElement.querySelector('.form-error');
+      if (errEl) errEl.classList.remove('show');
+    },
+
+    /** 값이 min~max 범위인지 검사. 실패 시 에러 표시 후 false 반환 */
+    minMax(input, min, max, msg) {
+      if (typeof input === 'string') input = document.querySelector(input);
+      if (!input) return false;
+      const val = Number(input.value) || 0;
+      if (val < min || val > max) {
+        this.showError(input, msg);
+        return false;
+      }
+      this.clearError(input);
+      return true;
+    },
+
+    required(input, msg) {
+      if (typeof input === 'string') input = document.querySelector(input);
+      if (!input) return false;
+      if (!input.value || !input.value.trim()) {
+        this.showError(input, msg);
+        return false;
+      }
+      this.clearError(input);
+      return true;
+    },
+  },
+
+  // ============================================
+  // 버튼 로딩 상태
+  // ============================================
+  button: {
+    loading(btn, text) {
+      if (typeof btn === 'string') btn = document.querySelector(btn);
+      if (!btn) return;
+      btn._origText = btn.textContent;
+      btn.textContent = text || '계산 중...';
+      btn.classList.add('loading');
+    },
+
+    reset(btn) {
+      if (typeof btn === 'string') btn = document.querySelector(btn);
+      if (!btn) return;
+      btn.textContent = btn._origText || '계산하기';
+      btn.classList.remove('loading');
     },
   },
 

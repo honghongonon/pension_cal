@@ -112,7 +112,7 @@
           </div>
         </div>
 
-        <div id="np-result" style="display:none;">
+        <div id="np-result" class="hidden">
           <!-- 기본 결과 배너 -->
           <div class="result-banner fade-in">
             <div class="label">예상 월 수령액 (정상 수령)</div>
@@ -145,17 +145,17 @@
             <h2 class="card-title"><span class="card-icon">📊</span>조기/정상/연기 누적 수령액 비교</h2>
             <div class="scenario-cards" id="np-scenarios">
               <div class="scenario-card" id="sc-early">
-                <div class="scenario-label" style="color:var(--accent);">조기수령</div>
+                <div class="scenario-label accent">조기수령</div>
                 <div class="scenario-value" id="sc-early-val">-</div>
                 <div class="scenario-desc" id="sc-early-desc">-</div>
               </div>
               <div class="scenario-card" id="sc-normal">
-                <div class="scenario-label" style="color:var(--primary);">정상수령</div>
+                <div class="scenario-label primary">정상수령</div>
                 <div class="scenario-value" id="sc-normal-val">-</div>
                 <div class="scenario-desc" id="sc-normal-desc">-</div>
               </div>
               <div class="scenario-card" id="sc-deferred">
-                <div class="scenario-label" style="color:var(--secondary);">연기수령</div>
+                <div class="scenario-label secondary">연기수령</div>
                 <div class="scenario-value" id="sc-deferred-val">-</div>
                 <div class="scenario-desc" id="sc-deferred-desc">-</div>
               </div>
@@ -163,14 +163,14 @@
             <div class="chart-container tall">
               <canvas id="npCompareChart"></canvas>
             </div>
-            <div class="info-box warning" id="np-breakeven-info" style="display:none;">
+            <div class="info-box warning hidden" id="np-breakeven-info">
               <span class="icon">⚖️</span>
               <div id="np-breakeven-text"></div>
             </div>
           </div>
 
           <!-- 추납 분석 -->
-          <div class="card fade-in" id="np-addpay-card" style="display:none;">
+          <div class="card fade-in hidden" id="np-addpay-card">
             <h2 class="card-title"><span class="card-icon">💰</span>추납 효과 분석</h2>
             <div class="result-mini-grid">
               <div class="result-mini">
@@ -222,10 +222,10 @@
         const deferYears = Number(form.deferYears.value) || 0;
         const additionalMonths = Number(form.additionalMonths.value) || 0;
 
-        if (enrollYears < 10) {
-          alert('국민연금 수급 자격은 최소 10년 이상 가입이 필요합니다.');
-          return;
-        }
+        if (!APP.validate.minMax(form.enrollYears, 10, 40, '국민연금 수급 자격은 최소 10년 이상 가입이 필요합니다.')) return;
+
+        const calcBtn = form.querySelector('.btn-primary');
+        APP.button.loading(calcBtn);
 
         const startAge = CalcEngine.nationalPension.getStartAge(birthYear);
         const basicPension = CalcEngine.nationalPension.calcBasicPension(avgIncome, enrollYears * 12);
@@ -234,8 +234,8 @@
         const replacementRate = avgIncome > 0 ? basicPension / avgIncome : 0;
 
         // UI 표시
-        document.getElementById('np-empty').style.display = 'none';
-        document.getElementById('np-result').style.display = '';
+        document.getElementById('np-empty').classList.add('hidden');
+        document.getElementById('np-result').classList.remove('hidden');
 
         document.getElementById('np-monthly').textContent = APP.format.manwon(basicPension);
         document.getElementById('np-start-info').textContent = `${birthYear}년생 기준, ${startAge}세부터 수령 시작`;
@@ -276,12 +276,12 @@
         }
         const beInfo = document.getElementById('np-breakeven-info');
         if (breakevenAge) {
-          beInfo.style.display = '';
+          beInfo.classList.remove('hidden');
           document.getElementById('np-breakeven-text').innerHTML =
             `<strong>손익분기점 분석:</strong> 연기수령이 정상수령 누적액을 추월하는 시점은 <strong>${breakevenAge}세</strong>입니다. ` +
             `${breakevenAge}세 이상 생존 시 연기수령이 유리합니다.`;
         } else {
-          beInfo.style.display = 'none';
+          beInfo.classList.add('hidden');
         }
 
         // 차트
@@ -324,7 +324,7 @@
         // 추납 분석
         if (additionalMonths > 0) {
           const addPay = CalcEngine.nationalPension.calcAdditionalPayment(basicPension, additionalMonths, avgIncome);
-          document.getElementById('np-addpay-card').style.display = '';
+          document.getElementById('np-addpay-card').classList.remove('hidden');
           document.getElementById('np-addpay-cost').textContent = APP.format.manwon(addPay.cost);
           document.getElementById('np-addpay-increase').textContent = '+' + APP.format.manwon(addPay.increase);
           document.getElementById('np-addpay-new').textContent = APP.format.manwon(addPay.newPension);
@@ -337,12 +337,12 @@
             `<strong>${APP.format.manwon(addPay.increase)}</strong> 증가합니다. `;
           
           if (additionalMonths > 119) {
-            summaryText += `<br><span style="color:var(--danger); font-size:var(--font-sm);">* 법적 최대 추납 기간인 119개월만 반영되었습니다.</span>`;
+            summaryText += `<br><span class="text-danger text-sm">* 법적 최대 추납 기간인 119개월만 반영되었습니다.</span>`;
           }
           
           document.getElementById('np-addpay-summary').innerHTML = summaryText;
         } else {
-          document.getElementById('np-addpay-card').style.display = 'none';
+          document.getElementById('np-addpay-card').classList.add('hidden');
         }
 
         // 계산 과정
@@ -394,6 +394,7 @@
 
         // 저장
         APP.storage.saveForm('npForm');
+        requestAnimationFrame(() => APP.button.reset(calcBtn));
       }
     };
 

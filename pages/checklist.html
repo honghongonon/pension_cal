@@ -31,14 +31,14 @@
       <div class="sub" id="cl-progress-sub">0 / 0 항목 완료</div>
     </div>
 
-    <div style="margin-bottom:16px; text-align:right;">
-      <button class="btn btn-outline" onclick="Checklist.resetAll()" style="font-size:var(--font-sm);">전체 초기화</button>
+    <div class="checklist-actions">
+      <button class="btn btn-outline btn-sm" onclick="Checklist.resetAll()">전체 초기화</button>
     </div>
 
     <!-- D-365 ~ D-180 -->
     <div class="card fade-in">
       <h2 class="card-title"><span class="card-icon">📅</span>D-365 ~ D-180 (퇴직 1년~6개월 전)</h2>
-      <div class="info-box info" style="margin-bottom:16px;">
+      <div class="info-box info mb-lg">
         <span class="icon">💡</span>
         <div>본격적인 준비 시작 단계. 현황 파악과 기본 전략을 수립합니다.</div>
       </div>
@@ -97,7 +97,7 @@
     <!-- D-180 ~ D-90 -->
     <div class="card fade-in">
       <h2 class="card-title"><span class="card-icon">📅</span>D-180 ~ D-90 (6개월~3개월 전)</h2>
-      <div class="info-box warning" style="margin-bottom:16px;">
+      <div class="info-box warning mb-lg">
         <span class="icon">⚠️</span>
         <div>구체적인 실행 단계. 건강보험, 세금 전략을 구체화합니다.</div>
       </div>
@@ -156,7 +156,7 @@
     <!-- D-90 ~ D-Day -->
     <div class="card fade-in">
       <h2 class="card-title"><span class="card-icon">📅</span>D-90 ~ D-Day (3개월~퇴직일)</h2>
-      <div class="info-box danger" style="margin-bottom:16px;">
+      <div class="info-box danger mb-lg">
         <span class="icon">🔴</span>
         <div>마무리 및 실행 단계. 퇴직 서류와 행정 절차를 처리합니다.</div>
       </div>
@@ -207,7 +207,7 @@
     <!-- D+1 ~ D+30 -->
     <div class="card fade-in">
       <h2 class="card-title"><span class="card-icon">📅</span>D+1 ~ D+30 (퇴직 후 1개월)</h2>
-      <div class="info-box success" style="margin-bottom:16px;">
+      <div class="info-box success mb-lg">
         <span class="icon">🟢</span>
         <div>퇴직 직후 반드시 처리해야 할 항목들입니다.</div>
       </div>
@@ -267,19 +267,19 @@
     <div class="card fade-in">
       <h2 class="card-title"><span class="card-icon">🔗</span>관련 계산기 바로가기</h2>
       <div class="grid-4">
-        <a href="national-pension.html" class="summary-card primary" style="text-decoration:none;">
+        <a href="national-pension.html" class="summary-card primary">
           <div class="icon">🏛️</div>
           <div class="title">국민연금</div>
         </a>
-        <a href="retirement-pension.html" class="summary-card secondary" style="text-decoration:none;">
+        <a href="retirement-pension.html" class="summary-card secondary">
           <div class="icon">💼</div>
           <div class="title">퇴직연금</div>
         </a>
-        <a href="health-insurance.html" class="summary-card info" style="text-decoration:none;">
+        <a href="health-insurance.html" class="summary-card info">
           <div class="icon">🏥</div>
           <div class="title">건강보험료</div>
         </a>
-        <a href="retirement-fund.html" class="summary-card danger" style="text-decoration:none;">
+        <a href="retirement-fund.html" class="summary-card danger">
           <div class="icon">🏦</div>
           <div class="title">노후자금</div>
         </a>
@@ -288,68 +288,6 @@
   </div>
 
   <footer id="footer"></footer>
-
-  <style>
-    .checklist-group {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .checklist-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 14px;
-      padding: 14px 16px;
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      transition: background 0.2s;
-      border: 1px solid transparent;
-    }
-    .checklist-item:hover {
-      background: var(--primary-alpha);
-    }
-    .checklist-item input[type="checkbox"] {
-      display: none;
-    }
-    .check-box {
-      width: 26px;
-      height: 26px;
-      border: 2px solid var(--border);
-      border-radius: 6px;
-      flex-shrink: 0;
-      margin-top: 2px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-      font-size: 16px;
-    }
-    .checklist-item input:checked ~ .check-box {
-      background: var(--secondary);
-      border-color: var(--secondary);
-    }
-    .checklist-item input:checked ~ .check-box::after {
-      content: '✓';
-      color: white;
-      font-weight: 700;
-    }
-    .checklist-item input:checked ~ div {
-      opacity: 0.5;
-    }
-    .checklist-item input:checked ~ div strong {
-      text-decoration: line-through;
-    }
-    .checklist-item div strong {
-      font-size: var(--font-base);
-      display: block;
-      margin-bottom: 2px;
-    }
-    .checklist-item div p {
-      font-size: var(--font-sm);
-      color: var(--text-light);
-      margin: 0;
-    }
-  </style>
 
   <script src="../js/constants.js"></script>
   <script src="../js/calculator-engine.js"></script>
@@ -397,9 +335,9 @@
         document.getElementById('cl-progress-sub').textContent = `${done} / ${total} 항목 완료`;
 
         const banner = document.getElementById('cl-progress-banner');
-        if (pct === 100) banner.style.background = 'linear-gradient(135deg, var(--secondary), #1a6b3a)';
-        else if (pct >= 50) banner.style.background = 'linear-gradient(135deg, var(--primary), var(--primary-dark))';
-        else banner.style.background = 'linear-gradient(135deg, var(--accent), #c46d00)';
+        banner.classList.remove('success', 'danger', 'accent');
+        if (pct === 100) banner.classList.add('success');
+        else if (pct < 50) banner.classList.add('accent');
       },
 
       resetAll() {

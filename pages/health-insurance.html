@@ -82,7 +82,7 @@
               </div>
               <div class="input-section">
                 <div class="input-section-title">자동차 (2024.02 폐지)</div>
-                <p class="form-help" style="margin-bottom: 10px; color: var(--primary);">2024년 2월부터 자동차에 대한 보험료 부과는 전면 폐지되었습니다.</p>
+                <p class="form-help highlight">2024년 2월부터 자동차에 대한 보험료 부과는 전면 폐지되었습니다.</p>
                 <div class="form-group">
                   <label class="form-label">자동차 가액 <span class="unit">(만원)</span></label>
                   <div class="input-group">
@@ -90,7 +90,7 @@
                     <span class="input-suffix">만원</span>
                   </div>
                 </div>
-                <div class="form-group" style="display:none;">
+                <div class="form-group hidden">
                   <label class="form-label">배기량 <span class="unit">(cc)</span></label>
                   <div class="input-group">
                     <input type="number" class="form-input" name="carCC" value="0" min="0" max="10000">
@@ -111,7 +111,7 @@
             </div>
           </div>
 
-          <div id="rg-result" style="display:none;">
+          <div id="rg-result" class="hidden">
             <div class="result-banner fade-in">
               <div class="label">월 건강보험료 (장기요양 포함)</div>
               <div class="amount" id="rg-total">-</div>
@@ -177,7 +177,7 @@
               <button type="button" class="btn btn-primary btn-block btn-lg" onclick="HealthIns.calcDependent()">판정하기</button>
             </form>
 
-            <div class="info-box info" style="margin-top:20px;">
+            <div class="info-box info mt-lg">
               <span class="icon">📌</span>
               <div>
                 <strong>피부양자 자격 요건 (2025~2026)</strong><br>
@@ -197,7 +197,7 @@
             </div>
           </div>
 
-          <div id="dp-result" style="display:none;">
+          <div id="dp-result" class="hidden">
             <div class="result-banner fade-in" id="dp-banner">
               <div class="label">피부양자 자격</div>
               <div class="amount" id="dp-status">-</div>
@@ -209,7 +209,7 @@
               <div id="dp-reasons"></div>
             </div>
 
-            <div class="card fade-in" id="dp-alt-card" style="display:none;">
+            <div class="card fade-in hidden" id="dp-alt-card">
               <h2 class="card-title"><span class="card-icon">💡</span>피부양자 탈락 시 대안</h2>
               <div class="result-details">
                 <div class="result-row">
@@ -221,7 +221,7 @@
                   <span class="value negative" id="dp-alt-annual">-</span>
                 </div>
               </div>
-              <div class="info-box warning" style="margin-top:12px;">
+              <div class="info-box warning mt-sm">
                 <span class="icon">⚠️</span>
                 <div>피부양자 자격을 유지하려면 소득을 줄이거나 재산을 조정하는 것이 유리할 수 있습니다. 특히 <strong>연금 수령액 조절</strong>이 효과적입니다.</div>
               </div>
@@ -280,7 +280,7 @@
             </div>
           </div>
 
-          <div id="cm-result" style="display:none;">
+          <div id="cm-result" class="hidden">
             <div class="compare-grid fade-in">
               <div class="compare-card" id="cm-vol-card">
                 <span class="badge blue">임의계속가입</span>
@@ -356,6 +356,8 @@
       },
 
       calcRegional() {
+        const calcBtn = document.querySelector('#hiRegionalForm .btn-primary');
+        APP.button.loading(calcBtn);
         const form = document.getElementById('hiRegionalForm');
         const getVal = (name) => Number(form[name].value.replace(/[^0-9]/g, '')) * 10000;
 
@@ -368,8 +370,8 @@
 
         const result = CalcEngine.healthInsurance.calcRegionalPremium(annualIncome, propertyValue, carValue, carCC);
 
-        document.getElementById('rg-empty').style.display = 'none';
-        document.getElementById('rg-result').style.display = '';
+        document.getElementById('rg-empty').classList.add('hidden');
+        document.getElementById('rg-result').classList.remove('hidden');
 
         document.getElementById('rg-total').textContent = APP.format.won(result.total) + '/월';
         document.getElementById('rg-health').textContent = APP.format.won(result.monthlyPremium);
@@ -437,48 +439,55 @@
         });
 
         APP.storage.saveForm('hiRegionalForm');
+        requestAnimationFrame(() => APP.button.reset(calcBtn));
       },
 
       calcDependent() {
+        const calcBtn = document.querySelector('#hiDependentForm .btn-primary');
+        APP.button.loading(calcBtn);
         const form = document.getElementById('hiDependentForm');
         const annualIncome = Number(form.annualIncome.value.replace(/[^0-9]/g, '')) * 10000;
         const propertyTax = Number(form.propertyTax.value.replace(/[^0-9]/g, '')) * 10000;
 
         const result = CalcEngine.healthInsurance.checkDependentStatus(annualIncome, propertyTax);
 
-        document.getElementById('dp-empty').style.display = 'none';
-        document.getElementById('dp-result').style.display = '';
+        document.getElementById('dp-empty').classList.add('hidden');
+        document.getElementById('dp-result').classList.remove('hidden');
 
         const banner = document.getElementById('dp-banner');
+        banner.classList.remove('success', 'danger');
         if (result.qualified) {
-          banner.style.background = 'linear-gradient(135deg, var(--secondary), #1a6b3a)';
+          banner.classList.add('success');
           document.getElementById('dp-status').textContent = '자격 충족 ✓';
           document.getElementById('dp-sub').textContent = '피부양자로 등록 가능하며 보험료가 면제됩니다';
-          document.getElementById('dp-alt-card').style.display = 'none';
+          document.getElementById('dp-alt-card').classList.add('hidden');
         } else {
-          banner.style.background = 'linear-gradient(135deg, var(--danger), #a02030)';
+          banner.classList.add('danger');
           document.getElementById('dp-status').textContent = '자격 미충족 ✗';
           document.getElementById('dp-sub').textContent = '피부양자 자격 요건을 충족하지 못합니다';
 
           // 지역가입자 예상 보험료
           const regional = CalcEngine.healthInsurance.calcRegionalPremium(annualIncome, propertyTax / 10000, 0, 0);
-          document.getElementById('dp-alt-card').style.display = '';
+          document.getElementById('dp-alt-card').classList.remove('hidden');
           document.getElementById('dp-alt-regional').textContent = APP.format.won(regional.total) + '/월';
           document.getElementById('dp-alt-annual').textContent = APP.format.manwon(regional.total * 12);
         }
 
         // 판정 사유
         document.getElementById('dp-reasons').innerHTML = result.reasons.map(r =>
-          `<div class="info-box ${result.qualified ? 'success' : 'danger'}" style="margin-bottom:8px;">
+          `<div class="info-box ${result.qualified ? 'success' : 'danger'} mb-md">
             <span class="icon">${result.qualified ? '✅' : '❌'}</span>
             <div>${r}</div>
           </div>`
         ).join('');
 
         APP.storage.saveForm('hiDependentForm');
+        requestAnimationFrame(() => APP.button.reset(calcBtn));
       },
 
       calcCompare() {
+        const calcBtn = document.querySelector('#hiCompareForm .btn-primary');
+        APP.button.loading(calcBtn);
         const form = document.getElementById('hiCompareForm');
         const lastSalary = Number(form.lastSalary.value.replace(/[^0-9]/g, '')) * 10000;
         const postIncome = Number(form.postIncome.value.replace(/[^0-9]/g, '')) * 10000;
@@ -486,8 +495,8 @@
 
         const result = CalcEngine.healthInsurance.compareVoluntaryVsRegional(lastSalary, postIncome, postProperty);
 
-        document.getElementById('cm-empty').style.display = 'none';
-        document.getElementById('cm-result').style.display = '';
+        document.getElementById('cm-empty').classList.add('hidden');
+        document.getElementById('cm-result').classList.remove('hidden');
 
         document.getElementById('cm-vol-monthly').textContent = APP.format.won(result.voluntary.premium);
         document.getElementById('cm-vol-ltc').textContent = APP.format.won(result.voluntary.longTermCare);
@@ -554,6 +563,7 @@
         });
 
         APP.storage.saveForm('hiCompareForm');
+        requestAnimationFrame(() => APP.button.reset(calcBtn));
       },
     };
 
