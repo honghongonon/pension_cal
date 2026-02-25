@@ -338,12 +338,21 @@ const APP = {
     render() {
       const footer = document.getElementById('footer');
       if (!footer) return;
+      const basePath = APP.nav.getBasePath();
       footer.innerHTML = `
         <div class="disclaimer">
           <p><strong>면책조항</strong></p>
           <p>본 사이트의 계산 결과는 참고용이며, 실제 금액과 차이가 있을 수 있습니다.</p>
           <p>정확한 금액은 국민연금공단(1355), 국세청(126), 건강보험공단(1577-1000)에 문의하시기 바랍니다.</p>
           <p class="disclaimer-meta">데이터 기준: ${CONSTANTS.COMMON.DATA_YEAR} | 최종 업데이트: ${CONSTANTS.COMMON.LAST_UPDATED}</p>
+          <hr style="border:none; border-top:1px solid #ddd; margin:16px 0;">
+          <p class="disclaimer-links">
+            <a href="${basePath}/pages/privacy.html">개인정보처리방침</a> |
+            <a href="${basePath}/pages/terms.html">이용약관</a> |
+            <a href="${basePath}/pages/about.html">사이트 소개</a>
+          </p>
+          <p class="disclaimer-meta">연락처: <a href="mailto:jihong641@gmail.com">jihong641@gmail.com</a></p>
+          <p class="disclaimer-meta">&copy; 2025 연금 포털</p>
         </div>
       `;
     },

@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://pension-cal.pages.dev/sitemap.xml
